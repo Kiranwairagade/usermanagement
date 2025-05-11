@@ -1,0 +1,645 @@
+/* Base reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body, html {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f5f7fa;
+  color: #333;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Main form container */
+.user-form-container {
+  width: 85%;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 1.2rem;
+  margin-left: 200px;
+  margin-top: 80px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Form heading */
+.user-form h2 {
+  text-align: center;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+  font-weight: 600;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid #f1f1f1;
+}
+
+/* Row with label + input layout */
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+
+/* Group wrapper for label + input */
+.form-group {
+  flex: 1;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: #566573;
+}
+
+.form-group input {
+  padding: 0.4rem;
+  font-size: 0.8rem;
+  border: 1px solid #dce4ec;
+  border-radius: 3px;
+  height: 30px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+/* Checkbox layout */
+.checkbox-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0;
+  font-size: 0.75rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #3498db;
+}
+
+/* Table container */
+.permissions-table-container {
+  width: 100%;
+  overflow-x: auto;
+  margin-top: 0.8rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+/* Actual table */
+.permissions-table {
+  width: 100%;
+  min-width: 550px;
+  font-size: 0.75rem;
+  border-collapse: collapse;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.permissions-table th,
+.permissions-table td {
+  padding: 0.4rem;
+  border: 1px solid #e9ecef;
+  text-align: center;
+}
+
+.permissions-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.permissions-table tr:nth-child(even) {
+  background-color: #f5f7fa;
+}
+
+.permissions-table tr:hover {
+  background-color: #ebf5fb;
+}
+
+.permissions-table input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  accent-color: #3498db;
+  cursor: pointer;
+}
+
+/* Error message */
+.error {
+  color: #e74c3c;
+  font-size: 0.75rem;
+  margin-top: 0.6rem;
+  padding: 0.4rem;
+  background-color: #fadbd8;
+  border-radius: 3px;
+  text-align: center;
+}
+
+/* Buttons section */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+}
+
+.form-actions button {
+  padding: 0.4rem 1rem;
+  font-size: 0.8rem;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  font-weight: 500;
+}
+
+.form-actions button[type="submit"] {
+  background-color: #3498db;
+  color: white;
+}
+
+.form-actions button[type="submit"]:hover {
+  background-color: #2980b9;
+}
+
+.form-actions button[type="submit"]:active {
+  transform: translateY(1px);
+}
+
+.form-actions button[type="button"] {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.form-actions button[type="button"]:hover {
+  background-color: #dee2e6;
+}
+
+.form-actions button:disabled {
+  background-color: #b3b3b3;
+  cursor: not-allowed;
+}
+
+/* Users List Table */
+.users-list-container {
+  margin-bottom: 2rem;
+  border-bottom: 1px solid #f1f1f1;
+  padding-bottom: 1rem;
+}
+
+.users-list-container h3 {
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+  color: #2c3e50;
+}
+
+.users-list-table {
+  width: 100%;
+  font-size: 0.75rem;
+  border-collapse: collapse;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.users-list-table th,
+.users-list-table td {
+  padding: 0.5rem;
+  border: 1px solid #e9ecef;
+  text-align: left;
+}
+
+.users-list-table th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.users-list-table tr:nth-child(even) {
+  background-color: #f5f7fa;
+}
+
+.users-list-table tr:hover {
+  background-color: #ebf5fb;
+}
+
+.users-list-table button {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.users-list-table button:hover {
+  background-color: #2980b9;
+}
+
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 0.3rem;
+  margin: 1rem 0;
+}
+
+.page-link {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  border: 1px solid #dce4ec;
+  background-color: #fff;
+  color: #3498db;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-link:hover {
+  background-color: #f8f9fa;
+}
+
+.page-link.active {
+  background-color: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.page-link:disabled {
+  color: #b3b3b3;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+/* Role dropdown styles */
+select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
+  font-size: 14px;
+}
+
+.role-info {
+  font-size: 12px;
+  color: #666;
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* Permissions section header */
+.permissions-table-container h3 {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+/* Adjust spacing for the checkbox group in the form row */
+.form-row .checkbox-group {
+  margin-top: 25px;
+}
+
+/* Module group headers */
+.module-group-header {
+  background-color: #f3f4f6;
+  font-weight: bold;
+}
+
+.module-group-header td {
+  padding: 8px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Permissions controls */
+.permissions-controls {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.select-all-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.select-all-btn:hover {
+  background-color: #2563eb;
+}
+
+/* Column header with select all button */
+.action-header {
+  position: relative;
+  padding-bottom: 30px !important;
+}
+
+.select-all-action {
+  position: absolute;
+  bottom: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+.select-all-action-btn {
+  background-color: transparent;
+  color: #3b82f6;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.select-all-action-btn:hover {
+  color: #2563eb;
+}
+
+/* Improve table layout */
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.permissions-table th, 
+.permissions-table td {
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  text-align: center;
+}
+
+.permissions-table th {
+  background-color: #f8fafc;
+  font-weight: bold;
+}
+
+.permissions-table td:first-child {
+  text-align: left;
+}
+
+/* Role info styling */
+.role-info {
+  font-size: 0.8rem;
+  color: #4b5563;
+  margin-top: 4px;
+}
+
+/* Responsive tweaks */
+@media (max-width: 992px) {
+  .user-form-container {
+    margin-left: 0;
+    width: 95%;
+  }
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+  
+  .user-form-container {
+    padding: 1.5rem;
+    margin-top: 50px;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 576px) {
+  .user-form-container {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0;
+  }
+  
+  .users-list-table {
+    font-size: 0.7rem;
+  }
+  
+  .pagination .page-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+  }
+}
+
+/* Permission modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.permission-modal {
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.modal-header {
+  padding: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  font-size: 1.2rem;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #aaaaaa;
+}
+
+.close-btn:hover {
+  color: #555555;
+}
+
+.modal-tabs {
+  display: flex;
+  overflow-x: auto;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tab-button {
+  padding: 0.8rem 1rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #4b5563;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+  color: #3498db;
+}
+
+.tab-button.active {
+  color: #3498db;
+  border-bottom: 2px solid #3498db;
+}
+
+.modal-body {
+  padding: 1rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  padding: 1rem;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+
+.btn-cancel {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.btn-cancel:hover {
+  background-color: #dee2e6;
+}
+
+.btn-save {
+  background-color: #3498db;
+  color: white;
+}
+
+.btn-save:hover {
+  background-color: #2980b9;
+}
+
+/* Permissions summary section */
+.permissions-summary-container {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.permissions-summary {
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.permissions-summary h3 {
+  font-size: 1rem;
+  margin-bottom: 0.8rem;
+  color: #2c3e50;
+}
+
+.permissions-summary-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.permissions-summary-content p {
+  font-size: 0.8rem;
+  color: #4b5563;
+}
+
+.manage-permissions-btn {
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.manage-permissions-btn:hover {
+  background-color: #2980b9;
+}
+
+/* Responsive design for the modal */
+@media (max-width: 768px) {
+  .permission-modal {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .modal-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .tab-button {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .permissions-summary-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.8rem;
+  }
+  
+  .manage-permissions-btn {
+    width: 100%;
+  }
+}

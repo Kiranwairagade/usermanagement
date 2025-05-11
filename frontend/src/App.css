@@ -1,0 +1,106 @@
+body {
+  background-color: #f4f6f9;
+  font-family: 'Arial', sans-serif;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.content-container {
+  flex: 1;
+  padding: 20px;
+  background-color: #f4f6f9;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  width: 1200px;
+  margin: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .content-container {
+    max-width: 95%; /* Adapts to smaller screens */
+    padding: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .content-container {
+    max-width: 100%;
+    padding: 10px;
+  }
+}
+
+
+.main-content-wrapper {
+  display: flex;
+  flex: 1;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-column {
+  padding: 0;
+  background-color: #ffffff;
+  border-right: 1px solid #e0e0e0;
+}
+
+.content-column {
+  padding: 20px;
+  background-color: #f4f6f9;
+  overflow-y: auto;
+}
+
+.dashboard-stats .card {
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.dashboard-stats .card-body {
+  padding: 20px;
+}
+
+.stat-card.new-orders {
+  background: linear-gradient(to right, #1a5f7c, #2196f3);
+  color: white;
+}
+
+.stat-card.bounce-rate {
+  background: linear-gradient(to right, #2e7d32, #4caf50);
+  color: white;
+}
+
+.stat-card.user-registrations {
+  background: linear-gradient(to right, #f57c00, #ff9800);
+  color: white;
+}
+
+.stat-card.unique-visitors {
+  background: linear-gradient(to right, #c62828, #f44336);
+  color: white;
+}
+
+.stat-card .btn-link {
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+}
+
+.stat-card .btn-link:hover {
+  color: white;
+}
+
+.stat-card .card-title {
+  font-size: 16px;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.stat-card .card-value {
+  font-size: 24px;
+  font-weight: bold;
+}

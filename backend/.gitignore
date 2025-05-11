@@ -1,0 +1,35 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# ASP.NET Core specific
+/bin
+/obj
+.vs
+*.user
+*.suo
+*.sln.docstates
+*.csproj.user
+*.vspscc
+*.vssscc
+_ReSharper.*
+/Properties/launchSettings.json
+/wwwroot
+
+# NuGet related
+packages/
+*.nupkg
+*.snupkg
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+*.opencover.xml
+
+# Build artifacts
+/publish
+
+# Deployment packages
+*.zip
+
+# Other
+*.log
+*.patch

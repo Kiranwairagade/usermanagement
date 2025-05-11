@@ -1,0 +1,51 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment-specific files
+.env
+venv/
+env/
+ENV/
+.venv
+
+# Package distribution - generally created by tools like setuptools
+dist/
+sdist/
+*.egg-info/
+.eggs/
+build/
+wheels/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+nosetests.xml
+coverage/
+*.cover
+.coverage
+.pytest_cache/
+
+# MyPy cache
+.mypy_cache/
+
+# Jupyter Notebook related (if applicable)
+.ipynb_checkpoints/
+
+# Python Eggs
+*.egg
+
+# OS or Editor related
+.DS_Store
+.idea/
+*.swp
+*.swo
+*.vmc
+*.log
+
+# Flask specific (if applicable)
+instance/

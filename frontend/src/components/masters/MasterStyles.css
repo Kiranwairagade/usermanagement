@@ -1,0 +1,884 @@
+/* Shared Master Component Styles */
+.master-container {
+  width: 80%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  margin-left: 200px;
+  margin-top: 40px;
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.master-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.master-header h1 {
+  font-size: 20px;
+  color: #333;
+  margin: 0;
+  text-align: center;
+}
+
+.search-filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 0px;
+}
+
+.search-container {
+  display: flex;
+  flex: 2;
+  min-width: 250px;
+}
+
+.search-container input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px 0 0 4px;
+  font-size: 12px;
+}
+
+.search-container button {
+  padding: 8px 12px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 0 4px 4px 0;
+  cursor: pointer;
+}
+
+.filter-container {
+  display: flex;
+  flex: 1;
+  min-width: 180px;
+}
+
+.filter-container select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.add-section {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.add-section input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  min-width: 150px;
+}
+
+.add-section button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  white-space: nowrap;
+}
+
+.add-section button:hover {
+  background-color: #45a049;
+}
+
+.master-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+}
+
+table th {
+  background-color: #f2f2f2;
+  position: sticky;
+  top: 0;
+  color: #333;
+  font-weight: 600;
+}
+
+table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+table button {
+  padding: 6px 10px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+table input {
+  width: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.edit-btn {
+  background-color: #2196F3;
+  color: white;
+}
+
+.edit-btn:hover {
+  background-color: #0b7dda;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.delete-btn:hover {
+  background-color: #d32f2f;
+}
+
+.save-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.save-btn:hover {
+  background-color: #45a049;
+}
+
+.cancel-btn {
+  background-color: #f0ad4e;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #ec971f;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  gap: 6px;
+}
+
+.pagination button {
+  padding: 6px 10px;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.pagination button:hover:not(:disabled) {
+  background-color: #f1f1f1;
+}
+
+.pagination button:disabled {
+  background-color: #f8f9fa;
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.pagination button.active {
+  background-color: #2196F3;
+  color: white;
+  border-color: #2196F3;
+}
+
+.no-results {
+  text-align: center;
+  padding: 20px;
+  color: #666;
+}
+
+.permission-denied {
+  text-align: center;
+  padding: 15px;
+  margin: 0px;
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+  .master-container {
+    width: 95%;
+    margin-left: auto;
+    padding: 15px;
+  }
+  
+  .add-section {
+    flex-direction: column;
+  }
+  
+  .search-filter-container {
+    flex-direction: column;
+  }
+  
+  .search-container,
+  .filter-container {
+    width: 100%;
+  }
+  
+  table {
+    font-size: 12px;
+  }
+  
+  table button {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
+/* Add these styles to your existing MasterStyles.css file */
+
+/* Modal styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  width: 80%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+}
+
+.close-btn:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 24px;
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid #e5e5e5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+/* Form styles */
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-group input[type="text"],
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus,
+.form-group select:focus {
+  border-color: #4a90e2;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.checkbox-group {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox-group label {
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Permissions section styles */
+.permissions-section {
+  margin-top: 24px;
+  border-top: 1px solid #e5e5e5;
+  padding-top: 24px;
+}
+
+.permissions-section h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.add-permission-form {
+  margin-bottom: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 16px;
+  background-color: #f9f9f9;
+}
+
+.form-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.form-row .form-group {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.add-permission-btn {
+  height: 36px;
+  padding: 0 16px;
+  background-color: #4a90e2;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.add-permission-btn:hover {
+  background-color: #3a7bc8;
+}
+
+.selected-permissions {
+  margin-top: 16px;
+}
+
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.permissions-table th,
+.permissions-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.permissions-table th {
+  background-color: #f5f5f5;
+  font-weight: 500;
+  color: #333;
+}
+
+.remove-btn {
+  background-color: #ff4d4f;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-btn:hover {
+  background-color: #ef3234;
+}
+
+.no-permissions {
+  color: #999;
+  font-style: italic;
+  text-align: center;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+/* Button styles */
+.add-button-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+.add-btn {
+  background-color: #52c41a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.add-btn:hover {
+  background-color: #47a814;
+}
+
+.save-btn {
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.save-btn:hover {
+  background-color: #0c7ee0;
+}
+
+.cancel-btn {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.cancel-btn:hover {
+  background-color: #e5e5e5;
+}
+
+.save-btn.disabled {
+  background-color: #b8b8b8;
+  cursor: not-allowed;
+}
+/* Add these styles to your MasterStyles.css file */
+
+/* Modal size for permissions */
+.modal-lg {
+  width: 90%;
+  max-width: 1200px;
+}
+
+/* Permissions container - using flex layout */
+.permissions-container {
+  display: flex;
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 400px;
+}
+
+/* Sidebar Module Selection */
+.sidebar-module-selection {
+  width: 30%;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  padding: 0;
+}
+
+.sidebar-category {
+  border-bottom: 1px solid #ddd;
+}
+
+.sidebar-category:last-child {
+  border-bottom: none;
+}
+
+.sidebar-category-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #f1f3f5;
+  cursor: pointer;
+}
+
+.sidebar-category-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.sidebar-module-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-module-item {
+  padding: 8px 15px 8px 30px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.sidebar-module-item:hover {
+  background-color: #e9ecef;
+}
+
+.sidebar-module-item.active {
+  background-color: #007bff;
+  color: white;
+}
+
+/* Module Permissions Area */
+.module-permissions {
+  width: 70%;
+  padding: 20px;
+  background-color: #fff;
+}
+
+.module-permissions h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.permission-checkboxes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.permission-checkbox {
+  display: flex;
+  align-items: center;
+}
+
+.permission-checkbox label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.permission-checkbox input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.module-permissions-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6c757d;
+  text-align: center;
+  padding: 20px;
+}
+
+/* Selected Permissions Summary */
+.selected-permissions-summary {
+  margin-top: 30px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 15px;
+  background-color: #f8f9fa;
+}
+
+.selected-permissions-summary h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+}
+
+.permissions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.permissions-table th,
+.permissions-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.permissions-table th {
+  background-color: #f1f3f5;
+  font-weight: 600;
+}
+
+.permissions-table tr:last-child td {
+  border-bottom: none;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.remove-btn:hover {
+  background-color: #c82333;
+}
+
+/* For mobile view - stack the layout */
+@media (max-width: 768px) {
+  .permissions-container {
+    flex-direction: column;
+  }
+  
+  .sidebar-module-selection,
+  .module-permissions {
+    width: 100%;
+  }
+  
+  .sidebar-module-selection {
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+    max-height: 300px;
+  }
+}
+/* Add these styles to your existing MasterStyles.css file */
+
+/* Categories and modules permissions table styling */
+.permissions-container-categories {
+  display: flex;
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  min-height: 400px;
+}
+
+/* Category selection list */
+.categories-list {
+  width: 25%;
+  background-color: #f8f9fa;
+  border-right: 1px solid #ddd;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.category-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.category-item:hover {
+  background-color: #e9ecef;
+}
+
+.category-item.active {
+  background-color: #007bff;
+  color: white;
+}
+
+.arrow {
+  font-size: 12px;
+}
+
+/* Modules permissions table */
+.modules-permissions-table {
+  width: 75%;
+  padding: 16px;
+  overflow-x: auto;
+}
+
+.modules-permissions-table h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ddd;
+  font-size: 18px;
+}
+
+.permissions-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+}
+
+.permissions-matrix-table th,
+.permissions-matrix-table td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+}
+
+.permissions-matrix-table th {
+  background-color: #f2f2f2;
+  font-weight: 600;
+  color: #333;
+  position: sticky;
+  top: 0;
+}
+
+.permissions-matrix-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  min-width: 150px;
+  background-color: #f8f9fa;
+}
+
+.permission-checkbox-cell {
+  text-align: center;
+}
+
+.permission-checkbox-cell input[type="checkbox"] {
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
+.not-applicable {
+  color: #ccc;
+}
+
+.select-all-cell {
+  min-width: 140px;
+}
+
+.select-all-btn, .clear-all-btn {
+  padding: 4px 8px;
+  margin: 0 2px;
+  font-size: 12px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.select-all-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.select-all-btn:hover {
+  background-color: #45a049;
+}
+
+.clear-all-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.clear-all-btn:hover {
+  background-color: #d32f2f;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .permissions-container-categories {
+    flex-direction: column;
+  }
+  
+  .categories-list,
+  .modules-permissions-table {
+    width: 100%;
+  }
+  
+  .categories-list {
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .permissions-matrix-table {
+    font-size: 12px;
+  }
+  
+  .permission-checkbox-cell input[type="checkbox"] {
+    transform: scale(1);
+  }
+  
+  .select-all-btn, .clear-all-btn {
+    padding: 2px 4px;
+    font-size: 10px;
+  }
+}

@@ -1,0 +1,32 @@
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 40px; /* Reduced height */
+  background: #589ee8;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 15px; /* Adjusted padding */
+  z-index: 1000; /* Ensures navbar stays on top */
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: white;
+  gap: 6px; /* Slightly reduced gap */
+  font-size: 14px; /* Adjusted font size */
+}
+
+.navbar-brand .icon {
+  font-size: 18px; /* Slightly reduced icon size */
+}
+
+.navbar-brand:hover {
+  text-decoration: none;
+  color: white;
+}
+

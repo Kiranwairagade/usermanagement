@@ -1,0 +1,40 @@
+/* src/components/common/Permission.css */
+.permission-denied {
+    background-color: #fff3f3;
+    border: 1px solid #ffcfcf;
+    border-radius: 4px;
+    padding: 10px 15px;
+    margin: 10px 0;
+    color: #d32f2f;
+    text-align: center;
+  }
+  
+  .permission-denied-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 50vh;
+    text-align: center;
+    padding: 20px;
+  }
+  
+  .permission-denied-page h2 {
+    color: #d32f2f;
+    margin-bottom: 10px;
+  }
+  
+  .permission-denied-page button {
+    margin-top: 20px;
+    padding: 8px 16px;
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .permission-denied-page button:hover {
+    background-color: #0d8bf2;
+  }
