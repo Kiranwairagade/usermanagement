@@ -5,7 +5,7 @@ using Microsoft.OpenApi.Models;
 using backend.Services;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Serialization; // ✅ Required for ReferenceHandler
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,6 +54,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
+builder.Services.AddScoped<IUserService, UserService>(); // Add this line to register the UserService
 builder.Services.AddHostedService<PermissionDataMigration>();
 
 // JWT Authentication Configuration

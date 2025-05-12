@@ -46,13 +46,60 @@ export const getUserById = async (userId) => {
   }
 };
 
-// Get user permissions
+// Get user permissions - FIXED to handle the actual response format
 export const getUserPermissions = async (userId) => {
   try {
     const response = await axios.get(`${API_URL}/users/${userId}/permissions`);
-    return response.data;
+    
+    // Handle the specific format observed in the console log
+    if (response.data && response.data.$values) {
+      return response.data.$values;
+    } else if (response.data && response.data.$id && response.data.$values) {
+      // This matches the actual format shown in the warning
+      return response.data.$values;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data && Array.isArray(response.data.userPermissions)) {
+      return response.data.userPermissions;
+    } else if (response.data && response.data.userPermissions && response.data.userPermissions.$values) {
+      return response.data.userPermissions.$values;
+    }
+    
+    // If all else fails, log what we got and return empty array
+    console.warn('Unexpected permissions response format:', response.data);
+    // Attempt to extract any array data we can find
+    const anyArrayData = Object.values(response.data).find(val => Array.isArray(val));
+    if (anyArrayData) {
+      console.log('Found potential permissions array:', anyArrayData);
+      return anyArrayData;
+    }
+    
+    return [];
   } catch (error) {
     console.error(`Error fetching permissions for user with ID ${userId}:`, error);
+    throw error;
+  }
+};
+
+// Get user with complete permissions data
+export const getUserWithPermissions = async (userId) => {
+  try {
+    // Get basic user data
+    const userData = await getUserById(userId);
+    if (!userData) {
+      throw new Error('User data not found');
+    }
+    
+    // Get user permissions
+    const permissions = await getUserPermissions(userId);
+    
+    // Combine the data
+    return {
+      ...userData,
+      userPermissions: permissions || []
+    };
+  } catch (error) {
+    console.error(`Error fetching user with permissions for ID ${userId}:`, error);
     throw error;
   }
 };

@@ -1,273 +1,128 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using backend.DTOs;
 using backend.Models;
-using backend.Data;
 using backend.Services;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
-using BCrypt.Net;
+using Microsoft.AspNetCore.Authorization;
+using System;
 
 namespace backend.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
         private readonly IUserService _userService;
 
-        public UsersController(ApplicationDbContext context, IUserService userService)
+        public UsersController(IUserService userService)
         {
-            _context = context;
             _userService = userService;
         }
 
-        // GET: api/users
+        // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<UsersResponse>> GetUsers(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] string? searchTerm = null)
-        {
-            var response = await _userService.GetUsersAsync(pageNumber, pageSize, searchTerm);
-            return Ok(response);
-        }
-
-        // GET: api/users/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserDto>> GetUser(int id)
+        public async Task<ActionResult<UsersResponse>> GetUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchTerm = null)
         {
             try
             {
-                var userDetail = await _userService.GetUserByIdAsync(id);
-                var permissions = await _userService.GetUserPermissionsAsync(id);
+                var result = await _userService.GetUsersAsync(pageNumber, pageSize, searchTerm);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
 
-                var user = new UserDto(
-                    userDetail.UserId,
-                    userDetail.Username,
-                    userDetail.Email,
-                    userDetail.FirstName,
-                    userDetail.LastName,
-                    true, // IsActive - should come from your actual user model
-                    System.DateTime.UtcNow, // CreatedAt - replace with actual data
-                    System.DateTime.UtcNow, // UpdatedAt - replace with actual data
-                    permissions.Where(p => p.CanRead || p.CanCreate || p.CanUpdate || p.CanDelete)
-                        .Select(p => p.ModuleName)
-                        .Distinct()
-                        .ToList()
-                );
-
-                // Include user permissions in the response
-                var userWithPermissions = new
-                {
-                    user.UserId,
-                    user.Username,
-                    user.Email,
-                    user.FirstName,
-                    user.LastName,
-                    user.IsActive,
-                    user.CreatedAt,
-                    user.UpdatedAt,
-                    user.Permissions,
-                    UserPermissions = permissions.ToList()
-                };
-
-                return Ok(userWithPermissions);
+        // GET: api/Users/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDetailDto>> GetUser(int id)
+        {
+            try
+            {
+                var user = await _userService.GetUserByIdAsync(id);
+                return Ok(user);
             }
             catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-        }
-
-        // GET: api/users/5/permissions
-        [HttpGet("{id}/permissions")]
-        public async Task<ActionResult<IEnumerable<UserPermissionDto>>> GetUserPermissions(int id)
-        {
-            var userExists = await _context.Users.AnyAsync(u => u.UserId == id);
-            if (!userExists)
+            catch (Exception ex)
             {
-                return NotFound();
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            var permissions = await _context.UserPermissions
-                .Where(p => p.UserId == id)
-                .Select(p => new UserPermissionDto
-                {
-                    UserId = p.UserId,
-                    ModuleName = p.ModuleName,
-                    CanCreate = p.CanCreate,
-                    CanRead = p.CanRead,
-                    CanUpdate = p.CanUpdate,
-                    CanDelete = p.CanDelete
-                })
-                .ToListAsync();
-
-            return Ok(permissions);
         }
 
-        // POST: api/users
+        // POST: api/Users
         [HttpPost]
-        public async Task<ActionResult<User>> CreateUser(CreateUserDto createUserDto)
+        public async Task<ActionResult> CreateUser([FromBody] CreateUserRequest request)
         {
-            if (await _context.Users.AnyAsync(u => u.Username == createUserDto.Username))
-                return BadRequest(new { message = "Username already exists" });
-
-            if (await _context.Users.AnyAsync(u => u.Email == createUserDto.Email))
-                return BadRequest(new { message = "Email already exists" });
-
-            // Hash password using BCrypt
-            var hashedPassword = BCrypt.Net.BCrypt.HashPassword(createUserDto.Password);
-
-            var user = new User
+            try
             {
-                Username = createUserDto.Username,
-                Email = createUserDto.Email,
-                PasswordHash = hashedPassword,
-                FirstName = createUserDto.FirstName,
-                LastName = createUserDto.LastName,
-                IsActive = createUserDto.IsActive,
-                CreatedAt = System.DateTime.UtcNow,
-                UpdatedAt = System.DateTime.UtcNow,
-                Permissions = new List<string>()
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            if (createUserDto.UserPermissions != null && createUserDto.UserPermissions.Count > 0)
-            {
-                foreach (var perm in createUserDto.UserPermissions)
+                // Validate password match
+                if (request.Password != request.ConfirmPassword)
                 {
-                    var permission = new UserPermission
-                    {
-                        UserId = user.UserId,
-                        ModuleName = perm.ModuleName,
-                        CanCreate = perm.CanCreate,
-                        CanRead = perm.CanRead,
-                        CanUpdate = perm.CanUpdate,
-                        CanDelete = perm.CanDelete
-                    };
-                    _context.UserPermissions.Add(permission);
+                    return BadRequest("Passwords do not match");
                 }
 
-                await _context.SaveChangesAsync();
-
-                user.Permissions = createUserDto.UserPermissions
-                    .Where(p => p.CanRead || p.CanCreate || p.CanUpdate || p.CanDelete)
-                    .Select(p => p.ModuleName)
-                    .Distinct()
-                    .ToList();
-
-                user.UpdatedAt = System.DateTime.UtcNow;
-                await _context.SaveChangesAsync();
+                int userId = await _userService.CreateUserAsync(request);
+                return CreatedAtAction(nameof(GetUser), new { id = userId }, new { userId });
             }
-
-            return CreatedAtAction(nameof(GetUser), new { id = user.UserId },
-                new UserDto(
-                    user.UserId,
-                    user.Username,
-                    user.Email,
-                    user.FirstName,
-                    user.LastName,
-                    user.IsActive,
-                    user.CreatedAt,
-                    user.UpdatedAt,
-                    user.Permissions ?? new List<string>()
-                ));
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
-        // PUT: api/users/5
+        // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, UpdateUserDto updateUserDto)
+        public async Task<IActionResult> UpdateUser(int id, UpdateUserRequest request)
         {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
-                return NotFound();
-
-            // Check for duplicate username
-            if (user.Username != updateUserDto.Username &&
-                await _context.Users.AnyAsync(u => u.Username == updateUserDto.Username))
-                return BadRequest(new { message = "Username already exists" });
-
-            // Check for duplicate email
-            if (user.Email != updateUserDto.Email &&
-                await _context.Users.AnyAsync(u => u.Email == updateUserDto.Email))
-                return BadRequest(new { message = "Email already exists" });
-
-            // Update user properties
-            user.Username = updateUserDto.Username;
-            user.Email = updateUserDto.Email;
-            user.FirstName = updateUserDto.FirstName;
-            user.LastName = updateUserDto.LastName;
-            user.IsActive = updateUserDto.IsActive;
-            user.UpdatedAt = System.DateTime.UtcNow;
-
-            // Update permissions
-            if (updateUserDto.UserPermissions != null)
+            try
             {
-                // Remove existing permissions
-                var existingPermissions = await _context.UserPermissions
-                    .Where(p => p.UserId == id)
-                    .ToListAsync();
-
-                _context.UserPermissions.RemoveRange(existingPermissions);
-                await _context.SaveChangesAsync();
-
-                // Add new permissions
-                foreach (var perm in updateUserDto.UserPermissions)
+                var success = await _userService.UpdateUserAsync(id, request);
+                if (success)
                 {
-                    var permission = new UserPermission
-                    {
-                        UserId = id,
-                        ModuleName = perm.ModuleName,
-                        CanCreate = perm.CanCreate,
-                        CanRead = perm.CanRead,
-                        CanUpdate = perm.CanUpdate,
-                        CanDelete = perm.CanDelete
-                    };
-                    _context.UserPermissions.Add(permission);
+                    return Ok(new { message = "User updated successfully" });
                 }
-
-                // Update permissions list in user object
-                user.Permissions = updateUserDto.UserPermissions
-                    .Where(p => p.CanRead || p.CanCreate || p.CanUpdate || p.CanDelete)
-                    .Select(p => p.ModuleName)
-                    .Distinct()
-                    .ToList();
+                return NotFound();
             }
-
-            await _context.SaveChangesAsync();
-            return NoContent();
+            catch (KeyNotFoundException)
+            {
+                return NotFound();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
         }
 
-        // DELETE: api/users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(int id)
+        // GET: api/Users/5/permissions
+        [HttpGet("{userId}/permissions")]
+        public async Task<ActionResult<IEnumerable<UserPermissionDto>>> GetUserPermissions(int userId)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            try
+            {
+                var permissions = await _userService.GetUserPermissionsAsync(userId);
+                return Ok(permissions);
+            }
+            catch (KeyNotFoundException)
             {
                 return NotFound();
             }
-
-            // Delete associated permissions first
-            var permissions = await _context.UserPermissions
-                .Where(p => p.UserId == id)
-                .ToListAsync();
-                
-            if (permissions.Any())
+            catch (Exception ex)
             {
-                _context.UserPermissions.RemoveRange(permissions);
+                return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
     }
 }
