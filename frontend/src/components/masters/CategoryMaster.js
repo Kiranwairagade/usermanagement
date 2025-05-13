@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePermission } from '../../contexts/PermissionContext';
 import {
   getAllCategories,
   addCategory,
@@ -9,12 +10,13 @@ import PermissionCheck from '../common/PermissionCheck';
 import './MasterStyles.css';
 
 const CategoryMaster = () => {
+  const { hasPermission } = usePermission();
   const [categories, setCategories] = useState([]);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryDescription, setNewCategoryDescription] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
   const [editingId, setEditingId] = useState(null);
-  const [editedName, setEditedName] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +27,23 @@ const CategoryMaster = () => {
   const [filterField, setFilterField] = useState('all');
   const [filteredCategories, setFilteredCategories] = useState([]);
 
+  // Check permission helper
+  const checkPermission = (module, action) => {
+    const normalizedModule = module.toLowerCase().replace(/\s+/g, '-');
+    const actionMap = {
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
+    };
+    const normalizedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
+    return hasPermission(normalizedModule, normalizedAction);
+  };
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -34,6 +53,12 @@ const CategoryMaster = () => {
   }, [searchTerm, filterField, categories]);
 
   const loadCategories = async () => {
+    if (!checkPermission('categories', 'view')) {
+      setError('You do not have permission to view categories');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -47,11 +72,11 @@ const CategoryMaster = () => {
         setCategories([]);
       }
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        setError('You do not have permission to view categories');
+      console.error('Error loading categories:', error);
+      if (error.response?.status === 403) {
+        setError('Your permissions have changed. Please refresh the page.');
       } else {
         setError('Failed to load categories');
-        console.error('Error loading categories:', error);
       }
     } finally {
       setIsLoading(false);
@@ -86,83 +111,117 @@ const CategoryMaster = () => {
     }
     
     setFilteredCategories(results);
-    setCurrentPage(1); // Reset to first page when search or filter changes
+    setCurrentPage(1);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) {
+    if (!checkPermission('categories', 'create')) {
+      alert('You do not have permission to add categories.');
+      return;
+    }
+
+    if (!formData.name.trim()) {
       alert('Category name is required!');
       return;
     }
 
     try {
       const added = await addCategory({
-        categoryName: newCategoryName,
-        description: newCategoryDescription,
+        categoryName: formData.name,
+        description: formData.description,
       });
 
       if (added) {
-        setNewCategoryName('');
-        setNewCategoryDescription('');
-        loadCategories();
+        setFormData({
+          name: '',
+          description: ''
+        });
+        await loadCategories();
       }
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to add categories.');
+      console.error('Error adding category:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
-        console.error('Error adding category:', error);
+        alert('An error occurred while adding the category.');
       }
     }
   };
 
   const handleDelete = async (id) => {
+    if (!checkPermission('categories', 'delete')) {
+      alert('You do not have permission to delete categories.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this category?')) {
       try {
         await deleteCategory(id);
-        loadCategories();
+        await loadCategories();
       } catch (error) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          alert('You do not have permission to delete categories.');
+        console.error('Error deleting category:', error);
+        if (error.response?.status === 403) {
+          alert('Your permissions have changed. Please refresh the page.');
         } else {
-          console.error('Error deleting category:', error);
+          alert('Failed to delete category.');
         }
       }
     }
   };
 
-  const handleEdit = (cat) => {
-    setEditingId(cat.categoryId);
-    setEditedName(cat.name);
-    setEditedDescription(cat.description || '');
+  const handleEdit = (category) => {
+    if (!checkPermission('categories', 'edit')) {
+      alert('You do not have permission to edit categories.');
+      return;
+    }
+
+    setEditingId(category.categoryId);
+    setFormData({
+      name: category.name,
+      description: category.description || ''
+    });
   };
 
   const handleUpdate = async (id) => {
-    if (!editedName.trim()) {
+    if (!formData.name.trim()) {
       alert('Category name is required!');
       return;
     }
 
     try {
       const updated = await updateCategory(id, {
-        categoryName: editedName,
-        description: editedDescription,
+        categoryName: formData.name,
+        description: formData.description,
       });
 
       if (updated) {
         setEditingId(null);
-        loadCategories();
+        await loadCategories();
       }
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to update categories.');
+      console.error('Error updating category:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
-        console.error('Error updating category:', error);
+        alert('An error occurred while updating the category.');
       }
     }
   };
 
   const handleCancel = () => {
     setEditingId(null);
+    setFormData({
+      name: '',
+      description: ''
+    });
   };
 
   const handleSearch = (e) => {
@@ -183,14 +242,15 @@ const CategoryMaster = () => {
     </div>
   );
 
+  // Pagination
   const totalPages = Math.ceil(filteredCategories.length / pageSize);
   const paginatedCategories = filteredCategories.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -221,22 +281,28 @@ const CategoryMaster = () => {
         <PermissionCheck 
           moduleName="categories" 
           action="create"
-          fallback={permissionDeniedMessage('add')}
+          fallback={null}
         >
           <div className="add-section">
             <input
               type="text"
-              value={newCategoryName}
-              onChange={(e) => setNewCategoryName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
               placeholder="Category name"
             />
             <input
               type="text"
-              value={newCategoryDescription}
-              onChange={(e) => setNewCategoryDescription(e.target.value)}
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
               placeholder="Category description"
             />
-            <button onClick={handleAddCategory} className="add-btn">
+            <button 
+              onClick={handleAddCategory} 
+              className="add-btn"
+              disabled={!checkPermission('categories', 'create')}
+            >
               Add Category
             </button>
           </div>
@@ -261,62 +327,81 @@ const CategoryMaster = () => {
               </thead>
               <tbody>
                 {paginatedCategories.length > 0 ? (
-                  paginatedCategories.map((cat) => (
-                    <tr key={cat.categoryId}>
-                      <td>{cat.categoryId}</td>
+                  paginatedCategories.map((category) => (
+                    <tr key={category.categoryId}>
+                      <td>{category.categoryId}</td>
                       <td>
-                        {editingId === cat.categoryId ? (
+                        {editingId === category.categoryId ? (
                           <input
                             type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                           />
                         ) : (
-                          cat.name
+                          category.name
                         )}
                       </td>
                       <td>
-                        {editingId === cat.categoryId ? (
+                        {editingId === category.categoryId ? (
                           <input
                             type="text"
-                            value={editedDescription}
-                            onChange={(e) => setEditedDescription(e.target.value)}
+                            name="description"
+                            value={formData.description}
+                            onChange={handleInputChange}
                           />
                         ) : (
-                          cat.description || '-'
+                          category.description || '-'
                         )}
                       </td>
                       <td>
                         <div className="action-buttons">
-                          {editingId === cat.categoryId ? (
+                          {editingId === category.categoryId ? (
                             <>
                               <PermissionCheck 
                                 moduleName="categories" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="save-btn" onClick={() => handleUpdate(cat.categoryId)}>Save</button>
+                                <button 
+                                  className="save-btn" 
+                                  onClick={() => handleUpdate(category.categoryId)}
+                                >
+                                  Save
+                                </button>
                               </PermissionCheck>
-                              <button className="cancel-btn" onClick={handleCancel}>Cancel</button>
+                              <button 
+                                className="cancel-btn" 
+                                onClick={handleCancel}
+                              >
+                                Cancel
+                              </button>
                             </>
                           ) : (
                             <>
                               <PermissionCheck 
                                 moduleName="categories" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="edit-btn" onClick={() => handleEdit(cat)}>Edit</button>
+                                <button 
+                                  className="edit-btn" 
+                                  onClick={() => handleEdit(category)}
+                                >
+                                  Edit
+                                </button>
                               </PermissionCheck>
                               <PermissionCheck 
                                 moduleName="categories" 
                                 action="delete"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="delete-btn" onClick={() => handleDelete(cat.categoryId)}>Delete</button>
+                                <button 
+                                  className="delete-btn" 
+                                  onClick={() => handleDelete(category.categoryId)}
+                                >
+                                  Delete
+                                </button>
                               </PermissionCheck>
                             </>
                           )}

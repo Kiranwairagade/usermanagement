@@ -20,19 +20,25 @@ import {
   PackageCheck,
   PackageX,
   Forklift,
-  Boxes, // Using Boxes instead of Pallet
-  ShieldCheck // Icon for Roles
+  Boxes,
+  ShieldCheck,
+  MessageSquare
 } from 'lucide-react';
-import masterModules from '../../config/modules'; // Import the modules configuration
+import { 
+  masterModules, 
+  operationsModules, 
+  storageModules, 
+  adminModules 
+} from '../../config/modules';
 import './Sidebar.css';
 
 const icons = {
-  Categories: <Tag size={18} />,
-  Brands: <Box size={18} />,
-  Suppliers: <Truck size={18} />,
-  Products: <PackageSearch size={18} />,
-  Employees: <Users size={18} />,
-  Roles: <ShieldCheck size={18} />, // Icon for Roles
+  // Master modules
+  'Categories': <Tag size={18} />,
+  'Brands': <Box size={18} />,
+  'Suppliers': <Truck size={18} />,
+  'Products': <PackageSearch size={18} />,
+  'Roles': <ShieldCheck size={18} />,
   // Operations icons
   'Production Orders': <ClipboardList size={18} />,
   'Material Receipt': <PackagePlus size={18} />,
@@ -40,17 +46,21 @@ const icons = {
   // Storage icons
   'Inventory Management': <Warehouse size={18} />,
   'Stock Transfers': <Forklift size={18} />,
-  'Stock Adjustments': <Boxes size={18} /> // Changed from Pallet to Boxes
+  'Stock Adjustments': <Boxes size={18} />,
+  // Admin icons
+  'User Management': <UserCog size={18} />,
+  'ChatBot': <MessageSquare size={18} />
 };
 
 const Sidebar = () => {
   const { logout } = useAuth();
   const { hasPermission, isLoading } = usePermission();
   const navigate = useNavigate();
-  const [mastersOpen, setMastersOpen] = useState(true);
-  const [operationsOpen, setOperationsOpen] = useState(true);
-  const [storageOpen, setStorageOpen] = useState(true);
-  const [adminOpen, setAdminOpen] = useState(true);
+  const [mastersOpen, setMastersOpen] = useState(false);
+const [operationsOpen, setOperationsOpen] = useState(false);
+const [storageOpen, setStorageOpen] = useState(false);
+const [adminOpen, setAdminOpen] = useState(false);
+
 
   const handleLogout = () => {
     logout();
@@ -58,19 +68,43 @@ const Sidebar = () => {
   };
 
   const handleRestrictedClick = (e, module) => {
-    if (!hasPermission(module.toLowerCase(), 'view')) {
+    // Convert module name to path format (lowercase with dashes)
+    const modulePathName = module.toLowerCase().replace(/\s+/g, '-');
+    
+    if (!hasPermission(modulePathName, 'view')) {
       e.preventDefault();
       alert(`You don't have permission to access the ${module} module.`);
     }
   };
 
-  // Define operations and storage modules
-  const operationsModules = ['Production Orders', 'Material Receipt', 'Quality Check'];
-  const storageModules = ['Inventory Management', 'Stock Transfers', 'Stock Adjustments'];
+  // Helper function to create sidebar links
+  const renderModuleLinks = (modulesList) => {
+    return modulesList.map((module) => {
+      // Convert module name to path format (lowercase with dashes)
+      const path = `/${module.toLowerCase().replace(/\s+/g, '-')}`;
+      const modulePathName = module.toLowerCase().replace(/\s+/g, '-');
+      const hasAccess = !isLoading && hasPermission(modulePathName, 'view');
+
+      return (
+        <li key={module}>
+          <NavLink
+            to={path}
+            className={`sidebar-link ${!hasAccess ? 'restricted' : ''}`}
+            onClick={(e) => handleRestrictedClick(e, module)}
+          >
+            {icons[module] || <Box size={18} />}
+            <span>{module}</span>
+            {!hasAccess && <Lock size={14} className="lock-icon" />}
+          </NavLink>
+        </li>
+      );
+    });
+  };
 
   return (
     <div className="sidebar">
       <div className="sidebar-content">
+        {/* Masters Section */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -81,28 +115,12 @@ const Sidebar = () => {
           </div>
           {mastersOpen && (
             <ul className="sidebar-list">
-              {masterModules.map((module) => {
-                const path = `/${module.toLowerCase().replace(' ', '-')}`;
-                const hasAccess = !isLoading && hasPermission(module.toLowerCase().replace(' ', '-'), 'view');
-
-                return (
-                  <li key={module}>
-                    <NavLink
-                      to={path}
-                      className={`sidebar-link ${!hasAccess ? 'restricted' : ''}`}
-                      onClick={(e) => handleRestrictedClick(e, module)}
-                    >
-                      {icons[module]}
-                      <span>{module}</span>
-                      {!hasAccess && <Lock size={14} className="lock-icon" />}
-                    </NavLink>
-                  </li>
-                );
-              })}
+              {renderModuleLinks(masterModules)}
             </ul>
           )}
         </div>
 
+        {/* Operations Section */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -113,28 +131,12 @@ const Sidebar = () => {
           </div>
           {operationsOpen && (
             <ul className="sidebar-list">
-              {operationsModules.map((module) => {
-                const path = `/${module.toLowerCase().replace(' ', '-')}`;
-                const hasAccess = !isLoading && hasPermission(module.toLowerCase().replace(' ', '-'), 'view');
-
-                return (
-                  <li key={module}>
-                    <NavLink
-                      to={path}
-                      className={`sidebar-link ${!hasAccess ? 'restricted' : ''}`}
-                      onClick={(e) => handleRestrictedClick(e, module)}
-                    >
-                      {icons[module]}
-                      <span>{module}</span>
-                      {!hasAccess && <Lock size={14} className="lock-icon" />}
-                    </NavLink>
-                  </li>
-                );
-              })}
+              {renderModuleLinks(operationsModules)}
             </ul>
           )}
         </div>
 
+        {/* Storage Section */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -145,28 +147,12 @@ const Sidebar = () => {
           </div>
           {storageOpen && (
             <ul className="sidebar-list">
-              {storageModules.map((module) => {
-                const path = `/${module.toLowerCase().replace(' ', '-')}`;
-                const hasAccess = !isLoading && hasPermission(module.toLowerCase().replace(' ', '-'), 'view');
-
-                return (
-                  <li key={module}>
-                    <NavLink
-                      to={path}
-                      className={`sidebar-link ${!hasAccess ? 'restricted' : ''}`}
-                      onClick={(e) => handleRestrictedClick(e, module)}
-                    >
-                      {icons[module]}
-                      <span>{module}</span>
-                      {!hasAccess && <Lock size={14} className="lock-icon" />}
-                    </NavLink>
-                  </li>
-                );
-              })}
+              {renderModuleLinks(storageModules)}
             </ul>
           )}
         </div>
 
+        {/* Admin Section */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -177,17 +163,7 @@ const Sidebar = () => {
           </div>
           {adminOpen && (
             <ul className="sidebar-list">
-              <li>
-                <NavLink to="/user-management" className="sidebar-link">
-                  <UserCog size={18} /> <span>User Management</span>
-                </NavLink>
-              </li>
-
-              <li>
-                <NavLink to="/chatbot" className="sidebar-link">
-                  <UserCog size={18} /> <span>ChatBot</span>
-                </NavLink>
-              </li>
+              {renderModuleLinks(adminModules)}
             </ul>
           )}
         </div>

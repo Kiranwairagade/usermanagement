@@ -1,11 +1,10 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { getUserPermissions } from '../services/userService'; // Adjust the path if necessary
+import { getUserPermissions } from '../services/userService';
+import { masterModules, operationsModules, storageModules, adminModules } from '../config/modules';
 
-// Create Context
 const PermissionContext = createContext();
 
-// Custom Hook
 export const usePermission = () => {
   const context = useContext(PermissionContext);
   if (!context) {
@@ -14,116 +13,131 @@ export const usePermission = () => {
   return context;
 };
 
-// Provider Component
 export const PermissionProvider = ({ children }) => {
   const { currentUser, isAuthenticated } = useAuth();
   const [permissions, setPermissions] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null); // Added error state
+  const [error, setError] = useState(null);
 
- // fetchPermissions function in useEffect
-// In PermissionContext.js - Update the fetchPermissions function
-useEffect(() => {
-  const fetchPermissions = async () => {
-    if (!currentUser || !isAuthenticated) {
-      setPermissions({});
-      setIsLoading(false);
-      return;
-    }
+  const allModules = [
+    ...masterModules,
+    ...operationsModules,
+    ...storageModules,
+    ...adminModules
+  ];
 
-    try {
-      setIsLoading(true);
-      setError(null);
-      const userId = currentUser.userId || currentUser.id;
-
-      if (!userId) {
-        console.error("No user ID found in currentUser object:", currentUser);
+  useEffect(() => {
+    const fetchPermissions = async () => {
+      if (!currentUser || !isAuthenticated) {
         setPermissions({});
         setIsLoading(false);
         return;
       }
 
-      console.log("Fetching permissions for userId:", userId);
-      const userData = await getUserPermissions(userId);
-      console.log("Received user data:", userData);
+      try {
+        setIsLoading(true);
+        setError(null);
+        const userId = currentUser.userId || currentUser.id;
 
-      // Format permissions
-      const formattedPermissions = {};
-
-      if (currentUser?.role === 'Admin') {
-        // Simplified: Grant all permissions.
-        ['products', 'categories', 'brands', 'suppliers', 'roles','users'].forEach(module => {
-          formattedPermissions[module] = { view: true, create: true, edit: true, delete: true };
-        });
-        setPermissions(formattedPermissions);
-        setIsLoading(false);
-        return;
-      }
-
-      // Extract permissions from the nested structure
-      let permissionsArray = [];
-      
-      if (userData?.userPermissions) {
-        // Handle case where userPermissions might be an object with $values
-        if (userData.userPermissions.$values) {
-          permissionsArray = userData.userPermissions.$values;
-        } 
-        // Handle case where userPermissions is already an array
-        else if (Array.isArray(userData.userPermissions)) {
-          permissionsArray = userData.userPermissions;
+        if (!userId) {
+          console.error("No user ID found in currentUser object:", currentUser);
+          setPermissions({});
+          setIsLoading(false);
+          return;
         }
-      }
-      
-      // Process permissions
-      permissionsArray.forEach(perm => {
-        // Convert moduleName to lowercase for consistency
-        const moduleName = perm.moduleName?.toLowerCase();
-        if (moduleName) {
+
+        console.log("Fetching permissions for userId:", userId);
+        // This could return an array or an object with a userPermissions property
+        const userData = await getUserPermissions(userId);
+        console.log("Received user data:", userData);
+
+        const formattedPermissions = {};
+
+        // Give full access to Admin users
+        if (currentUser?.role === 'Admin') {
+          allModules.forEach(module => {
+            const key = module.toLowerCase().replace(/\s+/g, '-');
+            formattedPermissions[key] = { view: true, create: true, edit: true, delete: true };
+          });
+
+          setPermissions(formattedPermissions);
+          setIsLoading(false);
+          return;
+        }
+
+        // Handle different possible response formats
+        let permissionsArray = [];
+        
+        if (userData) {
+          if (Array.isArray(userData)) {
+            // Direct array response
+            permissionsArray = userData;
+          } else if (userData.userPermissions) {
+            // Object with userPermissions property
+            if (userData.userPermissions.$values) {
+              // Handle .NET serialization format
+              permissionsArray = userData.userPermissions.$values;
+            } else if (Array.isArray(userData.userPermissions)) {
+              permissionsArray = userData.userPermissions;
+            }
+          }
+        }
+
+        // Process permissions array into our format
+        permissionsArray.forEach(perm => {
+          if (!perm.moduleName) return;
+          
+          const moduleName = perm.moduleName.toLowerCase().replace(/\s+/g, '-');
           formattedPermissions[moduleName] = {
             view: !!perm.canRead,
             create: !!perm.canCreate,
             edit: !!perm.canUpdate,
-            delete: !!perm.canDelete,
+            delete: !!perm.canDelete
           };
-        }
-      });
+        });
 
-      // Ensure 'users' module has view permission for authenticated users
-      if (!formattedPermissions['users']) {
-        formattedPermissions['users'] = { view: true };
+        // Default permission modules for all authenticated users
+      formattedPermissions['user-management'] = formattedPermissions['user-management'] || { view: true };
+      formattedPermissions['chatbot'] = formattedPermissions['chatbot'] || { view: true };
+      formattedPermissions['dashboard'] = formattedPermissions['dashboard'] || { view: true };
+
+
+        console.log("Formatted permissions:", formattedPermissions);
+        setPermissions(formattedPermissions);
+      } catch (err) {
+        console.error("Failed to fetch permissions:", err);
+        setError(err);
+        // Default permissions on error
+        setPermissions({
+          'user-management': { view: true },
+          'chatbot': { view: true }
+        });
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      console.log("Formatted permissions:", formattedPermissions);
-      setPermissions(formattedPermissions);
-    } catch (err) {
-      setError(err);
-      console.error("Failed to fetch permissions:", err);
-      setPermissions({ users: { view: true } }); // Basic default
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  fetchPermissions();
-}, [currentUser, isAuthenticated]);
+    fetchPermissions();
+  }, [currentUser, isAuthenticated]);
 
   const hasPermission = (resourceType, action) => {
-    if (!resourceType || !action) return false;
-
-    const resource = resourceType.toLowerCase();
+    if (!resourceType) return false;
+    
+    const resource = resourceType.toLowerCase().replace(/\s+/g, '-');
     const actionMap = {
-      'view': 'view',
-      'read': 'view',
-      'create': 'create',
-      'add': 'create',
-      'edit': 'edit',
-      'update': 'edit',
-      'delete': 'delete',
-      'remove': 'delete'
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
     };
-    const mappedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
-
+    
+    const mappedAction = action && actionMap[action.toLowerCase()] ? actionMap[action.toLowerCase()] : action?.toLowerCase();
     const permission = !!permissions[resource]?.[mappedAction];
+    
     console.log(`Checking permission: ${resource}.${mappedAction} - Result: ${permission}`);
     return permission;
   };

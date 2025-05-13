@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePermission } from '../../contexts/PermissionContext';
 import {
   getProducts,
   createProduct,
@@ -9,16 +10,15 @@ import PermissionCheck from '../common/PermissionCheck';
 import './MasterStyles.css';
 
 const ProductMaster = () => {
+  const { hasPermission } = usePermission();
   const [products, setProducts] = useState([]);
-  const [newName, setNewName] = useState('');
-  const [newPrice, setNewPrice] = useState('');
-  const [newCategory, setNewCategory] = useState('');
-  const [newStock, setNewStock] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    price: '',
+    category: '',
+    stock: ''
+  });
   const [editingId, setEditingId] = useState(null);
-  const [editedName, setEditedName] = useState('');
-  const [editedPrice, setEditedPrice] = useState('');
-  const [editedCategory, setEditedCategory] = useState('');
-  const [editedStock, setEditedStock] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,6 +29,23 @@ const ProductMaster = () => {
   const [filterField, setFilterField] = useState('all');
   const [filteredProducts, setFilteredProducts] = useState([]);
 
+  // Check permission helper
+  const checkPermission = (module, action) => {
+    const normalizedModule = module.toLowerCase().replace(/\s+/g, '-');
+    const actionMap = {
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
+    };
+    const normalizedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
+    return hasPermission(normalizedModule, normalizedAction);
+  };
+
   useEffect(() => {
     loadProducts();
   }, []);
@@ -38,10 +55,17 @@ const ProductMaster = () => {
   }, [searchTerm, filterField, products]);
 
   const loadProducts = async () => {
+    if (!checkPermission('products', 'view')) {
+      setError('You do not have permission to view products');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       const data = await getProducts();
+      
       if (Array.isArray(data) && data.length > 0) {
         const normalizedProducts = data.map(product => ({
           productId: product.productId || product.ProductId || product.id || product.Id,
@@ -55,7 +79,12 @@ const ProductMaster = () => {
         setProducts([]);
       }
     } catch (error) {
-      setError('Failed to load products: ' + (error.message || 'Unknown error'));
+      console.error('Error loading products:', error);
+      if (error.response?.status === 403) {
+        setError('Your permissions have changed. Please refresh the page.');
+      } else {
+        setError('Failed to load products: ' + (error.message || 'Unknown error'));
+      }
       setProducts([]);
     } finally {
       setIsLoading(false);
@@ -94,84 +123,130 @@ const ProductMaster = () => {
     }
     
     setFilteredProducts(results);
-    setCurrentPage(1); // Reset to first page when search or filter changes
+    setCurrentPage(1);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddProduct = async () => {
-    if (!newName.trim() || !newPrice.trim() || !newCategory.trim() || !newStock.trim()) {
+    if (!checkPermission('products', 'create')) {
+      alert('You do not have permission to add products.');
+      return;
+    }
+
+    const { name, price, category, stock } = formData;
+    if (!name.trim() || !price.trim() || !category.trim() || !stock.trim()) {
       alert('All fields are required!');
       return;
     }
 
     try {
       const added = await createProduct({
-        Name: newName,
-        Price: parseFloat(newPrice),
-        Category: newCategory,
-        Stock: parseInt(newStock),
+        Name: name,
+        Price: parseFloat(price),
+        Category: category,
+        Stock: parseInt(stock),
       });
 
       if (added) {
-        setNewName('');
-        setNewPrice('');
-        setNewCategory('');
-        setNewStock('');
+        setFormData({
+          name: '',
+          price: '',
+          category: '',
+          stock: ''
+        });
         await loadProducts();
-      } else {
-        alert('Failed to add product. Please try again.');
       }
     } catch (error) {
-      alert('An error occurred while adding the product: ' + (error.message || 'Unknown error'));
+      console.error('Error adding product:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
+      } else {
+        alert('An error occurred while adding the product: ' + (error.message || 'Unknown error'));
+      }
     }
   };
 
   const handleDelete = async (id) => {
+    if (!checkPermission('products', 'delete')) {
+      alert('You do not have permission to delete products.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         await deleteProduct(id);
         await loadProducts();
       } catch (error) {
-        alert('Failed to delete product: ' + (error.message || 'Unknown error'));
+        console.error('Error deleting product:', error);
+        if (error.response?.status === 403) {
+          alert('Your permissions have changed. Please refresh the page.');
+        } else {
+          alert('Failed to delete product: ' + (error.message || 'Unknown error'));
+        }
       }
     }
   };
 
   const handleEdit = (product) => {
+    if (!checkPermission('products', 'edit')) {
+      alert('You do not have permission to edit products.');
+      return;
+    }
+
     setEditingId(product.productId);
-    setEditedName(product.name);
-    setEditedPrice(product.price);
-    setEditedCategory(product.category);
-    setEditedStock(product.stock);
+    setFormData({
+      name: product.name,
+      price: product.price.toString(),
+      category: product.category,
+      stock: product.stock.toString()
+    });
   };
 
   const handleUpdate = async (id) => {
-    if (!editedName.trim() || !editedPrice || !editedCategory.trim() || !editedStock) {
+    const { name, price, category, stock } = formData;
+    if (!name.trim() || !price.trim() || !category.trim() || !stock.trim()) {
       alert('All fields are required!');
       return;
     }
 
     try {
       const updatedData = {
-        Name: editedName,
-        Price: parseFloat(editedPrice),
-        Category: editedCategory,
-        Stock: parseInt(editedStock),
+        Name: name,
+        Price: parseFloat(price),
+        Category: category,
+        Stock: parseInt(stock),
       };
 
       const updated = await updateProduct(id, updatedData);
       if (updated) {
         setEditingId(null);
         await loadProducts();
-      } else {
-        alert('Failed to update product. Please try again.');
       }
     } catch (error) {
-      alert('An error occurred while updating the product: ' + (error.message || 'Unknown error'));
+      console.error('Error updating product:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
+      } else {
+        alert('An error occurred while updating the product: ' + (error.message || 'Unknown error'));
+      }
     }
   };
 
   const handleCancel = () => {
     setEditingId(null);
+    setFormData({
+      name: '',
+      price: '',
+      category: '',
+      stock: ''
+    });
   };
 
   const handleSearch = (e) => {
@@ -192,14 +267,15 @@ const ProductMaster = () => {
     </div>
   );
 
+  // Pagination
   const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -231,35 +307,45 @@ const ProductMaster = () => {
         <PermissionCheck 
           moduleName="products" 
           action="create"
-          fallback={permissionDeniedMessage('add')}
+          fallback={null}
         >
           <div className="add-section">
             <input
               type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
               placeholder="Product Name"
             />
             <input
               type="number"
-              value={newPrice}
-              onChange={(e) => setNewPrice(e.target.value)}
+              name="price"
+              value={formData.price}
+              onChange={handleInputChange}
               placeholder="Price"
               step="0.01"
+              min="0"
             />
             <input
               type="text"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
+              name="category"
+              value={formData.category}
+              onChange={handleInputChange}
               placeholder="Category"
             />
             <input
               type="number"
-              value={newStock}
-              onChange={(e) => setNewStock(e.target.value)}
+              name="stock"
+              value={formData.stock}
+              onChange={handleInputChange}
               placeholder="Stock"
+              min="0"
             />
-            <button onClick={handleAddProduct} className="add-btn">
+            <button 
+              onClick={handleAddProduct} 
+              className="add-btn"
+              disabled={!checkPermission('products', 'create')}
+            >
               Add Product
             </button>
           </div>
@@ -293,8 +379,9 @@ const ProductMaster = () => {
                         {editingId === product.productId ? (
                           <input
                             type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           product.name
@@ -304,20 +391,23 @@ const ProductMaster = () => {
                         {editingId === product.productId ? (
                           <input
                             type="number"
-                            value={editedPrice}
-                            onChange={(e) => setEditedPrice(e.target.value)}
+                            name="price"
+                            value={formData.price}
+                            onChange={handleInputChange}
                             step="0.01"
+                            min="0"
                           />
                         ) : (
-                          product.price
+                          `$${parseFloat(product.price).toFixed(2)}`
                         )}
                       </td>
                       <td>
                         {editingId === product.productId ? (
                           <input
                             type="text"
-                            value={editedCategory}
-                            onChange={(e) => setEditedCategory(e.target.value)}
+                            name="category"
+                            value={formData.category}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           product.category
@@ -327,8 +417,10 @@ const ProductMaster = () => {
                         {editingId === product.productId ? (
                           <input
                             type="number"
-                            value={editedStock}
-                            onChange={(e) => setEditedStock(e.target.value)}
+                            name="stock"
+                            value={formData.stock}
+                            onChange={handleInputChange}
+                            min="0"
                           />
                         ) : (
                           product.stock
@@ -341,14 +433,19 @@ const ProductMaster = () => {
                               <PermissionCheck
                                 moduleName="products"
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="save-btn" onClick={() => handleUpdate(product.productId)}>
+                                <button 
+                                  className="save-btn" 
+                                  onClick={() => handleUpdate(product.productId)}
+                                >
                                   Save
                                 </button>
                               </PermissionCheck>
-                              <button className="cancel-btn" onClick={handleCancel}>
+                              <button 
+                                className="cancel-btn" 
+                                onClick={handleCancel}
+                              >
                                 Cancel
                               </button>
                             </>
@@ -357,20 +454,24 @@ const ProductMaster = () => {
                               <PermissionCheck
                                 moduleName="products"
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="edit-btn" onClick={() => handleEdit(product)}>
+                                <button 
+                                  className="edit-btn" 
+                                  onClick={() => handleEdit(product)}
+                                >
                                   Edit
                                 </button>
                               </PermissionCheck>
                               <PermissionCheck
                                 moduleName="products"
                                 action="delete"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="delete-btn" onClick={() => handleDelete(product.productId)}>
+                                <button 
+                                  className="delete-btn" 
+                                  onClick={() => handleDelete(product.productId)}
+                                >
                                   Delete
                                 </button>
                               </PermissionCheck>

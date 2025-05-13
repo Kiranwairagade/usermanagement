@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePermission } from '../../contexts/PermissionContext';
 import {
   getAllSuppliers,
   addSupplier,
@@ -9,16 +10,15 @@ import PermissionCheck from '../common/PermissionCheck';
 import './MasterStyles.css';
 
 const SupplierMaster = () => {
+  const { hasPermission } = usePermission();
   const [suppliers, setSuppliers] = useState([]);
-  const [newSupplierName, setNewSupplierName] = useState('');
-  const [newSupplierEmail, setNewSupplierEmail] = useState('');
-  const [newSupplierPhone, setNewSupplierPhone] = useState('');
-  const [newSupplierAddress, setNewSupplierAddress] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    address: ''
+  });
   const [editingId, setEditingId] = useState(null);
-  const [editedName, setEditedName] = useState('');
-  const [editedEmail, setEditedEmail] = useState('');
-  const [editedPhone, setEditedPhone] = useState('');
-  const [editedAddress, setEditedAddress] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -29,6 +29,23 @@ const SupplierMaster = () => {
   const [filterField, setFilterField] = useState('all');
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
 
+  // Check permission helper
+  const checkPermission = (module, action) => {
+    const normalizedModule = module.toLowerCase().replace(/\s+/g, '-');
+    const actionMap = {
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
+    };
+    const normalizedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
+    return hasPermission(normalizedModule, normalizedAction);
+  };
+
   useEffect(() => {
     loadSuppliers();
   }, []);
@@ -38,6 +55,12 @@ const SupplierMaster = () => {
   }, [searchTerm, filterField, suppliers]);
 
   const loadSuppliers = async () => {
+    if (!checkPermission('suppliers', 'view')) {
+      setError('You do not have permission to view suppliers');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
@@ -53,9 +76,10 @@ const SupplierMaster = () => {
       }
     } catch (error) {
       console.error('Error loading suppliers:', error);
-      setError('Failed to load suppliers');
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        setError('You do not have permission to view suppliers');
+      if (error.response?.status === 403) {
+        setError('Your permissions have changed. Please refresh the page.');
+      } else {
+        setError('Failed to load suppliers');
       }
       setSuppliers([]);
     } finally {
@@ -97,41 +121,50 @@ const SupplierMaster = () => {
     }
     
     setFilteredSuppliers(results);
-    setCurrentPage(1); // Reset to first page when search or filter changes
+    setCurrentPage(1);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddSupplier = async () => {
-    if (
-      !newSupplierName.trim() ||
-      !newSupplierEmail.trim() ||
-      !newSupplierPhone.trim() ||
-      !newSupplierAddress.trim()
-    ) {
+    if (!checkPermission('suppliers', 'create')) {
+      alert('You do not have permission to add suppliers.');
+      return;
+    }
+
+    const { name, email, phone, address } = formData;
+    if (!name.trim() || !email.trim() || !phone.trim() || !address.trim()) {
       alert('All fields are required!');
       return;
     }
 
     try {
       const added = await addSupplier({
-        Name: newSupplierName,
-        Email: newSupplierEmail,
-        Phone: newSupplierPhone,
-        Address: newSupplierAddress,
+        Name: name,
+        Email: email,
+        Phone: phone,
+        Address: address,
       });
 
       if (added) {
-        setNewSupplierName('');
-        setNewSupplierEmail('');
-        setNewSupplierPhone('');
-        setNewSupplierAddress('');
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          address: ''
+        });
         loadSuppliers();
-      } else {
-        alert('Failed to add supplier. Please check console for details.');
       }
     } catch (error) {
-      console.error('Error in handleAddSupplier:', error);
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to add suppliers.');
+      console.error('Error adding supplier:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
         alert('An error occurred while adding the supplier.');
       }
@@ -139,14 +172,19 @@ const SupplierMaster = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!checkPermission('suppliers', 'delete')) {
+      alert('You do not have permission to delete suppliers.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this supplier?')) {
       try {
         await deleteSupplier(id);
         loadSuppliers();
       } catch (error) {
         console.error('Error deleting supplier:', error);
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          alert('You do not have permission to delete suppliers.');
+        if (error.response?.status === 403) {
+          alert('Your permissions have changed. Please refresh the page.');
         } else {
           alert('Failed to delete supplier.');
         }
@@ -155,42 +193,43 @@ const SupplierMaster = () => {
   };
 
   const handleEdit = (supplier) => {
+    if (!checkPermission('suppliers', 'edit')) {
+      alert('You do not have permission to edit suppliers.');
+      return;
+    }
+
     setEditingId(supplier.supplierId);
-    setEditedName(supplier.name);
-    setEditedEmail(supplier.email);
-    setEditedPhone(supplier.phone);
-    setEditedAddress(supplier.address);
+    setFormData({
+      name: supplier.name,
+      email: supplier.email || '',
+      phone: supplier.phone || '',
+      address: supplier.address || ''
+    });
   };
 
   const handleUpdate = async (id) => {
-    if (
-      !editedName.trim() ||
-      !editedEmail.trim() ||
-      !editedPhone.trim() ||
-      !editedAddress.trim()
-    ) {
+    const { name, email, phone, address } = formData;
+    if (!name.trim() || !email.trim() || !phone.trim() || !address.trim()) {
       alert('All fields are required!');
       return;
     }
 
     try {
       const updated = await updateSupplier(id, {
-        Name: editedName,
-        Email: editedEmail,
-        Phone: editedPhone,
-        Address: editedAddress,
+        Name: name,
+        Email: email,
+        Phone: phone,
+        Address: address,
       });
 
       if (updated) {
         setEditingId(null);
         loadSuppliers();
-      } else {
-        alert('Failed to update supplier. Please check console for details.');
       }
     } catch (error) {
       console.error('Error updating supplier:', error);
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to update suppliers.');
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
         alert('An error occurred while updating the supplier.');
       }
@@ -199,6 +238,12 @@ const SupplierMaster = () => {
 
   const handleCancel = () => {
     setEditingId(null);
+    setFormData({
+      name: '',
+      email: '',
+      phone: '',
+      address: ''
+    });
   };
 
   const handleSearch = (e) => {
@@ -219,14 +264,15 @@ const SupplierMaster = () => {
     </div>
   );
 
+  // Pagination
   const totalPages = Math.ceil(filteredSuppliers.length / pageSize);
   const paginatedSuppliers = filteredSuppliers.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -259,34 +305,42 @@ const SupplierMaster = () => {
         <PermissionCheck 
           moduleName="suppliers" 
           action="create"
-          fallback={permissionDeniedMessage('add')}
+          fallback={null}
         >
           <div className="add-section">
             <input
               type="text"
-              value={newSupplierName}
-              onChange={(e) => setNewSupplierName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
               placeholder="Supplier name"
             />
             <input
               type="email"
-              value={newSupplierEmail}
-              onChange={(e) => setNewSupplierEmail(e.target.value)}
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
               placeholder="Supplier email"
             />
             <input
               type="text"
-              value={newSupplierPhone}
-              onChange={(e) => setNewSupplierPhone(e.target.value)}
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
               placeholder="Supplier phone"
             />
             <input
               type="text"
-              value={newSupplierAddress}
-              onChange={(e) => setNewSupplierAddress(e.target.value)}
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
               placeholder="Supplier address"
             />
-            <button onClick={handleAddSupplier} className="add-btn">
+            <button 
+              onClick={handleAddSupplier} 
+              className="add-btn"
+              disabled={!checkPermission('suppliers', 'create')}
+            >
               Add Supplier
             </button>
           </div>
@@ -320,8 +374,9 @@ const SupplierMaster = () => {
                         {editingId === supplier.supplierId ? (
                           <input
                             type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           supplier.name
@@ -331,8 +386,9 @@ const SupplierMaster = () => {
                         {editingId === supplier.supplierId ? (
                           <input
                             type="email"
-                            value={editedEmail}
-                            onChange={(e) => setEditedEmail(e.target.value)}
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           supplier.email || '-'
@@ -342,8 +398,9 @@ const SupplierMaster = () => {
                         {editingId === supplier.supplierId ? (
                           <input
                             type="text"
-                            value={editedPhone}
-                            onChange={(e) => setEditedPhone(e.target.value)}
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           supplier.phone || '-'
@@ -353,8 +410,9 @@ const SupplierMaster = () => {
                         {editingId === supplier.supplierId ? (
                           <input
                             type="text"
-                            value={editedAddress}
-                            onChange={(e) => setEditedAddress(e.target.value)}
+                            name="address"
+                            value={formData.address}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           supplier.address || '-'
@@ -367,30 +425,44 @@ const SupplierMaster = () => {
                               <PermissionCheck 
                                 moduleName="suppliers" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="save-btn" onClick={() => handleUpdate(supplier.supplierId)}>Save</button>
+                                <button 
+                                  className="save-btn" 
+                                  onClick={() => handleUpdate(supplier.supplierId)}
+                                >
+                                  Save
+                                </button>
                               </PermissionCheck>
-                              <button className="cancel-btn" onClick={handleCancel}>Cancel</button>
+                              <button className="cancel-btn" onClick={handleCancel}>
+                                Cancel
+                              </button>
                             </>
                           ) : (
                             <>
                               <PermissionCheck 
                                 moduleName="suppliers" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="edit-btn" onClick={() => handleEdit(supplier)}>Edit</button>
+                                <button 
+                                  className="edit-btn" 
+                                  onClick={() => handleEdit(supplier)}
+                                >
+                                  Edit
+                                </button>
                               </PermissionCheck>
                               <PermissionCheck 
                                 moduleName="suppliers" 
                                 action="delete"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="delete-btn" onClick={() => handleDelete(supplier.supplierId)}>Delete</button>
+                                <button 
+                                  className="delete-btn" 
+                                  onClick={() => handleDelete(supplier.supplierId)}
+                                >
+                                  Delete
+                                </button>
                               </PermissionCheck>
                             </>
                           )}

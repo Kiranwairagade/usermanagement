@@ -33,6 +33,11 @@
   padding: 0 15px 8px 15px;
   cursor: pointer;
   user-select: none;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-section-header:hover {
+  background-color: #cbe6f7;
 }
 
 .sidebar-section-header h2 {
@@ -47,6 +52,13 @@
   padding: 0;
   margin: 0;
   width: 100%;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.sidebar-section-header + .sidebar-list {
+  max-height: 300px; /* Adjust this value based on your needs */
 }
 
 .sidebar-list li {
@@ -110,23 +122,37 @@
   background: #d32f2f;
 }
 
-.sidebar-link.restricted {
-  opacity: 0.7;
-  position: relative;
+.sidebar-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  color: #555;
 }
 
-.sidebar-link.restricted:hover {
-  background-color: #f2f2f2;
-  color: #666;
-  cursor: not-allowed;
+/* Animation for dropdown sections */
+@keyframes slideDown {
+  from {
+    max-height: 0;
+  }
+  to {
+    max-height: 300px;
+  }
 }
 
-.lock-icon {
-  position: absolute;
-  right: 10px;
-  color: #d32f2f;
+@keyframes slideUp {
+  from {
+    max-height: 300px;
+  }
+  to {
+    max-height: 0;
+  }
 }
 
-.sidebar-link.restricted:hover .lock-icon {
-  color: #ff5252;
+.slide-down {
+  animation: slideDown 0.3s ease forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease forwards;
 }

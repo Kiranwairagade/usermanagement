@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePermission } from '../../contexts/PermissionContext';
 import roleService from '../../services/roleService';
 import PermissionCheck from '../common/PermissionCheck';
 import './MasterStyles.css';
@@ -37,6 +38,7 @@ const moduleCategories = {
 };
 
 const RoleMaster = () => {
+  const { hasPermission } = usePermission();
   const [roles, setRoles] = useState([]);
   const [roleData, setRoleData] = useState({
     roleName: '',
@@ -51,7 +53,7 @@ const RoleMaster = () => {
   
   // Modal state
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // add, edit, view
+  const [modalMode, setModalMode] = useState('add');
   const [currentRoleId, setCurrentRoleId] = useState(null);
   
   // Search and Filter
@@ -67,6 +69,23 @@ const RoleMaster = () => {
     Storage: false,
     Admin: false
   });
+
+  // Check permission helper
+  const checkPermission = (module, action) => {
+    const normalizedModule = module.toLowerCase().replace(/\s+/g, '-');
+    const actionMap = {
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
+    };
+    const normalizedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
+    return hasPermission(normalizedModule, normalizedAction);
+  };
 
   useEffect(() => {
     loadRoles();
@@ -101,7 +120,6 @@ const RoleMaster = () => {
   const applySearchAndFilter = () => {
     let results = [...roles];
     
-    // Apply search
     if (searchTerm.trim()) {
       results = results.filter(role => {
         const searchLower = searchTerm.toLowerCase();
@@ -113,27 +131,26 @@ const RoleMaster = () => {
       });
     }
     
-    // Apply filter
     if (filterField !== 'all') {
       results = results.filter(role => {
-        if (filterField === 'active') {
-          return role.isActive === true;
-        } else if (filterField === 'inactive') {
-          return role.isActive === false;
-        }
+        if (filterField === 'active') return role.isActive === true;
+        if (filterField === 'inactive') return role.isActive === false;
         return true;
       });
     }
     
     setFilteredRoles(results);
-    setCurrentPage(1); // Reset to first page when search or filter changes
+    setCurrentPage(1);
   };
 
   const handleOpenModal = (mode, role = null) => {
+    if (!checkPermission('roles', mode === 'view' ? 'view' : mode === 'edit' ? 'edit' : 'create')) {
+      alert(`You don't have permission to ${mode} roles.`);
+      return;
+    }
+
     if (role) {
-      // Ensure permissions is always an array
       const permissions = Array.isArray(role.permissions) ? role.permissions : [];
-      
       setRoleData({
         roleName: role.roleName || '',
         description: role.description || '',
@@ -174,13 +191,18 @@ const RoleMaster = () => {
   };
 
   const handleDelete = async (id) => {
+    if (!checkPermission('roles', 'delete')) {
+      alert('You do not have permission to delete roles.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this role?')) {
       try {
         await roleService.deleteRole(id);
         loadRoles();
       } catch (error) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          alert('You do not have permission to delete roles.');
+        if (error.response?.status === 403) {
+          alert('Your permissions have changed. Please refresh the page.');
         } else {
           console.error('Error deleting role:', error);
           alert('Failed to delete role. Please try again.');
@@ -190,13 +212,18 @@ const RoleMaster = () => {
   };
 
   const handleSaveRole = async () => {
+    const requiredPermission = modalMode === 'add' ? 'create' : 'edit';
+    if (!checkPermission('roles', requiredPermission)) {
+      alert(`You don't have permission to ${requiredPermission} roles.`);
+      return;
+    }
+
     if (!roleData.roleName.trim()) {
       alert('Role name is required!');
       return;
     }
 
     try {
-      // Prepare the data for API
       const roleToSave = {
         roleName: roleData.roleName,
         description: roleData.description,
@@ -206,175 +233,115 @@ const RoleMaster = () => {
 
       if (modalMode === 'add') {
         await roleService.createRole(roleToSave);
-      } else if (modalMode === 'edit') {
+      } else {
         await roleService.updateRole(currentRoleId, roleToSave);
       }
       
       handleCloseModal();
       loadRoles();
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert(`You do not have permission to ${modalMode === 'add' ? 'add' : 'update'} roles.`);
+      if (error.response?.status === 403) {
+        alert(`Your permissions have changed. Please refresh the page.`);
       } else {
-        console.error(`Error ${modalMode === 'add' ? 'adding' : 'updating'} role:`, error);
-        alert(`Failed to ${modalMode === 'add' ? 'add' : 'update'} role. Please try again.`);
+        console.error(`Error saving role:`, error);
+        alert(`Failed to save role. Please try again.`);
       }
     }
   };
 
   const handleCategoryToggle = (category) => {
-    setExpandedCategories({
-      ...expandedCategories,
-      [category]: !expandedCategories[category]
-    });
-    
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
     setSelectedCategory(expandedCategories[category] ? '' : category);
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setRoleData({
-      ...roleData,
+    setRoleData(prev => ({
+      ...prev,
       [name]: type === 'checkbox' ? checked : value
-    });
+    }));
   };
 
   const handleAddPermission = (moduleName, action) => {
-    // Ensure permissions is always an array
     const permissions = Array.isArray(roleData.permissions) ? [...roleData.permissions] : [];
-    
-    // Check if permission already exists
-    const permissionExists = permissions.some(
+    const existingIndex = permissions.findIndex(
       p => p.moduleName === moduleName && p.action === action
     );
-    
-    if (permissionExists) {
-      // Toggle the permission if it exists
-      const updatedPermissions = permissions.map(p => {
-        if (p.moduleName === moduleName && p.action === action) {
-          return { ...p, isAllowed: !p.isAllowed };
-        }
-        return p;
-      });
-      setRoleData({
-        ...roleData,
-        permissions: updatedPermissions
-      });
+
+    if (existingIndex >= 0) {
+      permissions[existingIndex].isAllowed = !permissions[existingIndex].isAllowed;
     } else {
-      // Add new permission
-      const newPermission = {
+      permissions.push({
         moduleName,
         action,
         isAllowed: true
-      };
-      
-      setRoleData({
-        ...roleData,
-        permissions: [...permissions, newPermission]
       });
     }
+
+    setRoleData(prev => ({
+      ...prev,
+      permissions
+    }));
   };
 
   const handleRemovePermission = (index) => {
-    // Ensure permissions is an array
-    const permissions = Array.isArray(roleData.permissions) ? [...roleData.permissions] : [];
+    const permissions = [...roleData.permissions];
     permissions.splice(index, 1);
-    
-    setRoleData({
-      ...roleData,
-      permissions: permissions
-    });
+    setRoleData(prev => ({
+      ...prev,
+      permissions
+    }));
   };
 
   const isPermissionSelected = (moduleName, action) => {
-    // Ensure permissions is an array before using find
-    if (!Array.isArray(roleData.permissions)) {
-      return false;
-    }
-    
-    const permission = roleData.permissions.find(
-      p => p && p.moduleName === moduleName && p.action === action
-    );
-    return permission ? permission.isAllowed : false;
-  };
-
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const handleFilterChange = (e) => {
-    setFilterField(e.target.value);
-  };
-
-  const handleUnauthorized = (module, action) => {
-    alert(`You don't have permission to ${action} ${module}.`);
+    return roleData.permissions?.some(
+      p => p.moduleName === moduleName && p.action === action && p.isAllowed
+    ) || false;
   };
 
   const toggleAllModulePermissions = (moduleName, select) => {
-    const moduleActions = sidebarModules[moduleName];
-    
-    // Ensure permissions is an array
-    const permissions = Array.isArray(roleData.permissions) ? [...roleData.permissions] : [];
+    const permissions = [...roleData.permissions].filter(p => p.moduleName !== moduleName);
     
     if (select) {
-      // Add all permissions for this module
-      moduleActions.forEach(action => {
-        if (!isPermissionSelected(moduleName, action)) {
-          permissions.push({
-            moduleName,
-            action,
-            isAllowed: true
-          });
-        }
+      sidebarModules[moduleName].forEach(action => {
+        permissions.push({
+          moduleName,
+          action,
+          isAllowed: true
+        });
       });
-    } else {
-      // Remove all permissions for this module
-      const filteredPermissions = permissions.filter(
-        p => p.moduleName !== moduleName
-      );
-      
-      setRoleData({
-        ...roleData,
-        permissions: filteredPermissions
-      });
-      return; // Early return because we've already set the state
     }
-    
-    setRoleData({
-      ...roleData,
-      permissions: permissions
-    });
+
+    setRoleData(prev => ({
+      ...prev,
+      permissions
+    }));
   };
 
+  // Helper functions
+  const formatModuleName = (name) => {
+    return name.split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
+  const formatDate = (dateString) => {
+    return dateString ? new Date(dateString).toLocaleString() : '-';
+  };
+
+  // Pagination
   const totalPages = Math.ceil(filteredRoles.length / pageSize);
   const paginatedRoles = filteredRoles.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
-
-  // Helper function to format module name for display
-  const formatModuleName = (name) => {
-    return name
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleString();
-  };
-
-  const permissionDeniedMessage = (action) => (
-    <div className="permission-denied">
-      <p>You don't have permission to {action} roles.</p>
-    </div>
-  );
 
   return (
     <div className="master-container">
@@ -387,13 +354,13 @@ const RoleMaster = () => {
               type="text"
               placeholder="Search roles..."
               value={searchTerm}
-              onChange={handleSearch}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
             <button onClick={() => setSearchTerm('')}>Clear</button>
           </div>
           
           <div className="filter-container">
-            <select value={filterField} onChange={handleFilterChange}>
+            <select value={filterField} onChange={(e) => setFilterField(e.target.value)}>
               <option value="all">All Roles</option>
               <option value="active">Active Roles</option>
               <option value="inactive">Inactive Roles</option>
@@ -404,7 +371,7 @@ const RoleMaster = () => {
         <PermissionCheck 
           moduleName="roles" 
           action="create"
-          fallback={permissionDeniedMessage('add')}
+          fallback={null}
         >
           <div className="add-button-container">
             <button onClick={() => handleOpenModal('add')} className="add-btn">
@@ -453,29 +420,36 @@ const RoleMaster = () => {
                             moduleName="roles" 
                             action="view"
                             showAlways={true}
-                            onUnauthorized={() => handleUnauthorized("roles", "view")}
+                            onUnauthorized={() => alert("You don't have permission to view roles")}
                           >
-                            <button className="view-btn" onClick={() => handleOpenModal('view', role)}>
+                            <button 
+                              className="view-btn" 
+                              onClick={() => handleOpenModal('view', role)}
+                            >
                               View
                             </button>
                           </PermissionCheck>
                           <PermissionCheck 
                             moduleName="roles" 
                             action="edit"
-                            showAlways={true}
-                            onUnauthorized={() => handleUnauthorized("roles", "edit")}
+                            fallback={null}
                           >
-                            <button className="edit-btn" onClick={() => handleOpenModal('edit', role)}>
+                            <button 
+                              className="edit-btn" 
+                              onClick={() => handleOpenModal('edit', role)}
+                            >
                               Edit
                             </button>
                           </PermissionCheck>
                           <PermissionCheck 
                             moduleName="roles" 
                             action="delete"
-                            showAlways={true}
-                            onUnauthorized={() => handleUnauthorized("roles", "delete")}
+                            fallback={null}
                           >
-                            <button className="delete-btn" onClick={() => handleDelete(role.roleId)}>
+                            <button 
+                              className="delete-btn" 
+                              onClick={() => handleDelete(role.roleId)}
+                            >
                               Delete
                             </button>
                           </PermissionCheck>
@@ -524,7 +498,7 @@ const RoleMaster = () => {
         )}
       </div>
 
-      {/* Role Modal for Add/Edit/View */}
+      {/* Role Modal */}
       {showModal && (
         <div className="modal-overlay">
           <div className="modal-content modal-lg">
@@ -606,7 +580,6 @@ const RoleMaster = () => {
                 
                 {modalMode !== 'view' && (
                   <div className="permissions-container-categories">
-                    {/* Category Selection */}
                     <div className="categories-list">
                       {Object.keys(moduleCategories).map(category => (
                         <div 
@@ -620,7 +593,6 @@ const RoleMaster = () => {
                       ))}
                     </div>
                     
-                    {/* Display all modules of a selected category at once */}
                     {selectedCategory && (
                       <div className="modules-permissions-table">
                         <h4>{selectedCategory} Modules</h4>
@@ -695,7 +667,7 @@ const RoleMaster = () => {
                   </div>
                 )}
                 
-                {Array.isArray(roleData.permissions) && roleData.permissions.length > 0 && (
+                {roleData.permissions?.length > 0 && (
                   <div className="selected-permissions-summary">
                     <h4>Selected Permissions</h4>
                     <table className="permissions-table">
@@ -757,7 +729,11 @@ const RoleMaster = () => {
                 {modalMode === 'view' ? 'Close' : 'Cancel'}
               </button>
               {modalMode !== 'view' && (
-                <button onClick={handleSaveRole} className="save-btn">
+                <button 
+                  onClick={handleSaveRole} 
+                  className="save-btn"
+                  disabled={!checkPermission('roles', modalMode === 'add' ? 'create' : 'edit')}
+                >
                   Save Role
                 </button>
               )}

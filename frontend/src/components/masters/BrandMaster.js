@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { usePermission } from '../../contexts/PermissionContext';
 import {
   getAllBrands,
   addBrand,
@@ -9,12 +10,13 @@ import PermissionCheck from '../common/PermissionCheck';
 import './MasterStyles.css';
 
 const BrandMaster = () => {
+  const { hasPermission } = usePermission();
   const [brands, setBrands] = useState([]);
-  const [newBrandName, setNewBrandName] = useState('');
-  const [newBrandDescription, setNewBrandDescription] = useState('');
+  const [formData, setFormData] = useState({
+    name: '',
+    description: ''
+  });
   const [editingId, setEditingId] = useState(null);
-  const [editedName, setEditedName] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,6 +27,23 @@ const BrandMaster = () => {
   const [filterField, setFilterField] = useState('all');
   const [filteredBrands, setFilteredBrands] = useState([]);
 
+  // Check permission helper
+  const checkPermission = (module, action) => {
+    const normalizedModule = module.toLowerCase().replace(/\s+/g, '-');
+    const actionMap = {
+      view: 'view',
+      read: 'view',
+      create: 'create',
+      add: 'create',
+      edit: 'edit',
+      update: 'edit',
+      delete: 'delete',
+      remove: 'delete'
+    };
+    const normalizedAction = actionMap[action.toLowerCase()] || action.toLowerCase();
+    return hasPermission(normalizedModule, normalizedAction);
+  };
+
   useEffect(() => {
     loadBrands();
   }, []);
@@ -34,10 +53,17 @@ const BrandMaster = () => {
   }, [searchTerm, filterField, brands]);
 
   const loadBrands = async () => {
+    if (!checkPermission('brands', 'view')) {
+      setError('You do not have permission to view brands');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       const data = await getAllBrands();
+      
       if (Array.isArray(data)) {
         setBrands(data);
       } else if (Array.isArray(data?.$values)) {
@@ -45,11 +71,14 @@ const BrandMaster = () => {
       } else {
         setBrands([]);
       }
-      setIsLoading(false);
     } catch (error) {
-      console.error('Error fetching brands:', error);
-      setError('Failed to load brands');
-      setBrands([]);
+      console.error('Error loading brands:', error);
+      if (error.response?.status === 403) {
+        setError('Your permissions have changed. Please refresh the page.');
+      } else {
+        setError('Failed to load brands');
+      }
+    } finally {
       setIsLoading(false);
     }
   };
@@ -82,86 +111,117 @@ const BrandMaster = () => {
     }
     
     setFilteredBrands(results);
-    setCurrentPage(1); // Reset to first page when search or filter changes
+    setCurrentPage(1);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleAddBrand = async () => {
-    if (!newBrandName.trim()) {
+    if (!checkPermission('brands', 'create')) {
+      alert('You do not have permission to add brands.');
+      return;
+    }
+
+    if (!formData.name.trim()) {
       alert('Brand name is required!');
       return;
     }
 
     try {
       const added = await addBrand({
-        brandName: newBrandName,
-        description: newBrandDescription,
+        brandName: formData.name,
+        description: formData.description,
       });
 
       if (added) {
-        setNewBrandName('');
-        setNewBrandDescription('');
-        loadBrands();
+        setFormData({
+          name: '',
+          description: ''
+        });
+        await loadBrands();
       }
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to add brands.');
+      console.error('Error adding brand:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
-        console.error('Error adding brand:', error);
-        alert('Failed to add brand. Please try again.');
+        alert('An error occurred while adding the brand.');
       }
     }
   };
 
   const handleDelete = async (id) => {
+    if (!checkPermission('brands', 'delete')) {
+      alert('You do not have permission to delete brands.');
+      return;
+    }
+
     if (window.confirm('Are you sure you want to delete this brand?')) {
       try {
         await deleteBrand(id);
-        loadBrands();
+        await loadBrands();
       } catch (error) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          alert('You do not have permission to delete brands.');
+        console.error('Error deleting brand:', error);
+        if (error.response?.status === 403) {
+          alert('Your permissions have changed. Please refresh the page.');
         } else {
-          console.error('Error deleting brand:', error);
-          alert('Failed to delete brand. Please try again.');
+          alert('Failed to delete brand.');
         }
       }
     }
   };
 
   const handleEdit = (brand) => {
+    if (!checkPermission('brands', 'edit')) {
+      alert('You do not have permission to edit brands.');
+      return;
+    }
+
     setEditingId(brand.brandId);
-    setEditedName(brand.brandName);
-    setEditedDescription(brand.description || '');
+    setFormData({
+      name: brand.brandName,
+      description: brand.description || ''
+    });
   };
 
   const handleUpdate = async (id) => {
-    if (!editedName.trim()) {
+    if (!formData.name.trim()) {
       alert('Brand name is required!');
       return;
     }
 
     try {
       const updated = await updateBrand(id, {
-        brandName: editedName,
-        description: editedDescription,
+        brandName: formData.name,
+        description: formData.description,
       });
 
       if (updated) {
         setEditingId(null);
-        loadBrands();
+        await loadBrands();
       }
     } catch (error) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        alert('You do not have permission to update brands.');
+      console.error('Error updating brand:', error);
+      if (error.response?.status === 403) {
+        alert('Your permissions have changed. Please refresh the page.');
       } else {
-        console.error('Error updating brand:', error);
-        alert('Failed to update brand. Please try again.');
+        alert('An error occurred while updating the brand.');
       }
     }
   };
 
   const handleCancel = () => {
     setEditingId(null);
+    setFormData({
+      name: '',
+      description: ''
+    });
   };
 
   const handleSearch = (e) => {
@@ -182,14 +242,15 @@ const BrandMaster = () => {
     </div>
   );
 
+  // Pagination
   const totalPages = Math.ceil(filteredBrands.length / pageSize);
   const paginatedBrands = filteredBrands.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
   );
 
-  const handlePageChange = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   return (
@@ -220,22 +281,28 @@ const BrandMaster = () => {
         <PermissionCheck 
           moduleName="brands" 
           action="create"
-          fallback={permissionDeniedMessage('add')}
+          fallback={null}
         >
           <div className="add-section">
             <input
               type="text"
-              value={newBrandName}
-              onChange={(e) => setNewBrandName(e.target.value)}
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
               placeholder="Brand name"
             />
             <input
               type="text"
-              value={newBrandDescription}
-              onChange={(e) => setNewBrandDescription(e.target.value)}
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
               placeholder="Brand description"
             />
-            <button onClick={handleAddBrand} className="add-btn">
+            <button 
+              onClick={handleAddBrand} 
+              className="add-btn"
+              disabled={!checkPermission('brands', 'create')}
+            >
               Add Brand
             </button>
           </div>
@@ -267,8 +334,9 @@ const BrandMaster = () => {
                         {editingId === brand.brandId ? (
                           <input
                             type="text"
-                            value={editedName}
-                            onChange={(e) => setEditedName(e.target.value)}
+                            name="name"
+                            value={formData.name}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           brand.brandName
@@ -278,8 +346,9 @@ const BrandMaster = () => {
                         {editingId === brand.brandId ? (
                           <input
                             type="text"
-                            value={editedDescription}
-                            onChange={(e) => setEditedDescription(e.target.value)}
+                            name="description"
+                            value={formData.description}
+                            onChange={handleInputChange}
                           />
                         ) : (
                           brand.description || '-'
@@ -292,30 +361,47 @@ const BrandMaster = () => {
                               <PermissionCheck 
                                 moduleName="brands" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="save-btn" onClick={() => handleUpdate(brand.brandId)}>Save</button>
+                                <button 
+                                  className="save-btn" 
+                                  onClick={() => handleUpdate(brand.brandId)}
+                                >
+                                  Save
+                                </button>
                               </PermissionCheck>
-                              <button className="cancel-btn" onClick={handleCancel}>Cancel</button>
+                              <button 
+                                className="cancel-btn" 
+                                onClick={handleCancel}
+                              >
+                                Cancel
+                              </button>
                             </>
                           ) : (
                             <>
                               <PermissionCheck 
                                 moduleName="brands" 
                                 action="edit"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="edit-btn" onClick={() => handleEdit(brand)}>Edit</button>
+                                <button 
+                                  className="edit-btn" 
+                                  onClick={() => handleEdit(brand)}
+                                >
+                                  Edit
+                                </button>
                               </PermissionCheck>
                               <PermissionCheck 
                                 moduleName="brands" 
                                 action="delete"
-                                showAlways={true}
-                                onUnauthorized={handleUnauthorized}
+                                fallback={null}
                               >
-                                <button className="delete-btn" onClick={() => handleDelete(brand.brandId)}>Delete</button>
+                                <button 
+                                  className="delete-btn" 
+                                  onClick={() => handleDelete(brand.brandId)}
+                                >
+                                  Delete
+                                </button>
                               </PermissionCheck>
                             </>
                           )}
