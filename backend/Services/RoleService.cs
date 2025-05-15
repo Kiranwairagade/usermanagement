@@ -58,6 +58,17 @@ namespace backend.Services
             };
         }
 
+        public async Task<List<PermissionDto>> GetRolePermissionsAsync(int id)
+        {
+            var role = await _context.Roles
+                .Include(r => r.RolePermissions)
+                .FirstOrDefaultAsync(r => r.RoleId == id);
+                
+            if (role == null) return null;
+
+            return MapRolePermissionsToPermissionDtos(role.RolePermissions);
+        }
+
         public async Task<RoleDto> CreateRoleAsync(CreateRoleDto dto)
         {
             var role = new Role
@@ -137,6 +148,27 @@ namespace backend.Services
                 UpdatedAt = updatedRole.UpdatedAt,
                 Permissions = MapRolePermissionsToPermissionDtos(updatedRole.RolePermissions)
             };
+        }
+
+        public async Task<bool> UpdateRolePermissionsAsync(UpdateRolePermissionsDto dto)
+        {
+            var role = await _context.Roles
+                .Include(r => r.RolePermissions)
+                .FirstOrDefaultAsync(r => r.RoleId == dto.RoleId);
+                
+            if (role == null) return false;
+
+            // Remove existing permissions
+            _context.RolePermissions.RemoveRange(role.RolePermissions);
+            await _context.SaveChangesAsync();
+
+            // Add new permissions
+            if (dto.Permissions != null && dto.Permissions.Any())
+            {
+                await CreateRolePermissions(role.RoleId, dto.Permissions);
+            }
+
+            return true;
         }
 
         public async Task<bool> DeleteRoleAsync(int id)

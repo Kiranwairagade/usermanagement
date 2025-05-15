@@ -63,3 +63,13 @@ namespace backend.DTOs
         public int RoleId { get; set; }
     }
 }
+
+
+namespace backend.DTOs
+{
+    public class UpdateRolePermissionsDto
+    {
+        public int RoleId { get; set; }
+        public List<PermissionDto> Permissions { get; set; } = new List<PermissionDto>();
+    }
+}

@@ -35,6 +35,14 @@ namespace backend.Controllers
             return Ok(role);
         }
 
+        [HttpGet("{id}/permissions")]
+        public async Task<ActionResult<IEnumerable<PermissionDto>>> GetRolePermissions(int id)
+        {
+            var permissions = await _roleService.GetRolePermissionsAsync(id);
+            if (permissions == null) return NotFound();
+            return Ok(permissions);
+        }
+
         [HttpPost]
         public async Task<ActionResult<RoleDto>> CreateRole(CreateRoleDto dto)
         {
@@ -61,6 +69,24 @@ namespace backend.Controllers
                 var updatedRole = await _roleService.UpdateRoleAsync(id, dto);
                 if (updatedRole == null) return NotFound();
                 return Ok(updatedRole);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+        [HttpPut("{id}/permissions")]
+        public async Task<ActionResult<bool>> UpdateRolePermissions(int id, UpdateRolePermissionsDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            if (id != dto.RoleId) return BadRequest("Role ID mismatch");
+
+            try
+            {
+                var result = await _roleService.UpdateRolePermissionsAsync(dto);
+                if (!result) return NotFound();
+                return Ok(true);
             }
             catch (Exception ex)
             {

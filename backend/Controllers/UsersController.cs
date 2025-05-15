@@ -124,5 +124,26 @@ namespace backend.Controllers
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
         }
+
+        // DELETE: api/Users/5
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteUser(int id)
+{
+    try
+    {
+        var success = await _userService.DeleteUserAsync(id);
+        if (!success)
+        {
+            return NotFound(new { message = "User not found" });
+        }
+
+        return Ok(new { message = "User deleted successfully" });
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, $"Internal server error: {ex.Message}");
+    }
+}
+
     }
 }

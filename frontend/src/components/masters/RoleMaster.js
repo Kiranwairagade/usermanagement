@@ -13,20 +13,20 @@ const sidebarModules = {
   'products': ['view', 'create', 'edit', 'delete'],
   'employees': ['view', 'create', 'edit', 'delete'],
   'roles': ['view', 'create', 'edit', 'delete'],
-  
+
   // Operations modules
-  'production-orders': ['view', 'create', 'edit', 'delete', 'approve', 'reject'],
-  'material-receipt': ['view', 'create', 'edit', 'delete', 'confirm'],
-  'quality-check': ['view', 'create', 'edit', 'delete', 'approve', 'reject'],
-  
+  'production-orders': ['view', 'create', 'edit', 'delete'],
+  'material-receipt': ['view', 'create', 'edit', 'delete'],
+  'quality-check': ['view', 'create', 'edit', 'delete'],
+
   // Storage modules
   'inventory-management': ['view', 'create', 'edit', 'delete'],
-  'stock-transfers': ['view', 'create', 'edit', 'delete', 'approve'],
-  'stock-adjustments': ['view', 'create', 'edit', 'delete', 'approve'],
-  
+  'stock-transfers': ['view', 'create', 'edit', 'delete'],
+  'stock-adjustments': ['view', 'create', 'edit', 'delete'],
+
   // Admin modules
   'user-management': ['view', 'create', 'edit', 'delete'],
-  'chatbot': ['view', 'configure']
+  'chatbot': ['view', 'create', 'edit', 'delete'],
 };
 
 // Organize modules by categories to match sidebar structure
@@ -50,12 +50,13 @@ const RoleMaster = () => {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
-  
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalMode, setModalMode] = useState('add');
   const [currentRoleId, setCurrentRoleId] = useState(null);
-  
+  const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
+
   // Search and Filter
   const [searchTerm, setSearchTerm] = useState('');
   const [filterField, setFilterField] = useState('all');
@@ -119,7 +120,7 @@ const RoleMaster = () => {
 
   const applySearchAndFilter = () => {
     let results = [...roles];
-    
+
     if (searchTerm.trim()) {
       results = results.filter(role => {
         const searchLower = searchTerm.toLowerCase();
@@ -130,7 +131,7 @@ const RoleMaster = () => {
         );
       });
     }
-    
+
     if (filterField !== 'all') {
       results = results.filter(role => {
         if (filterField === 'active') return role.isActive === true;
@@ -138,46 +139,73 @@ const RoleMaster = () => {
         return true;
       });
     }
-    
+
     setFilteredRoles(results);
     setCurrentPage(1);
   };
 
-  const handleOpenModal = (mode, role = null) => {
-    if (!checkPermission('roles', mode === 'view' ? 'view' : mode === 'edit' ? 'edit' : 'create')) {
-      alert(`You don't have permission to ${mode} roles.`);
-      return;
+  const fetchRolePermissions = async (roleId) => {
+  try {
+    setIsLoadingPermissions(true);
+    const permissions = await roleService.getRolePermissions(roleId);
+    console.log('Fetched permissions:', permissions); // Add this line
+    
+    // Transform the permissions to match the expected format
+    const transformedPermissions = permissions.map(perm => ({
+      moduleName: perm.moduleName,
+      action: perm.action,
+      isAllowed: perm.isAllowed
+    }));
+    
+    return transformedPermissions;
+  } catch (error) {
+    console.error('Error fetching role permissions:', error);
+    return [];
+  } finally {
+    setIsLoadingPermissions(false);
+  }
+};
+
+  const handleOpenModal = async (mode, role = null) => {
+  if (!checkPermission('roles', mode === 'view' ? 'view' : mode === 'edit' ? 'edit' : 'create')) {
+    alert(`You don't have permission to ${mode} roles.`);
+    return;
+  }
+
+  if (role) {
+    // Fetch permissions when viewing/editing a role
+    let permissions = [];
+    if (mode === 'view' || mode === 'edit') {
+      permissions = await fetchRolePermissions(role.roleId);
     }
 
-    if (role) {
-      const permissions = Array.isArray(role.permissions) ? role.permissions : [];
-      setRoleData({
-        roleName: role.roleName || '',
-        description: role.description || '',
-        isActive: role.isActive ?? true,
-        permissions: permissions
-      });
-      setCurrentRoleId(role.roleId);
-    } else {
-      setRoleData({
-        roleName: '',
-        description: '',
-        isActive: true,
-        permissions: []
-      });
-      setCurrentRoleId(null);
-    }
-    
-    setModalMode(mode);
-    setShowModal(true);
-    setSelectedCategory('');
-    setExpandedCategories({
-      Masters: false,
-      Operations: false,
-      Storage: false,
-      Admin: false
+    setRoleData({
+      roleName: role.roleName || '',
+      description: role.description || '',
+      isActive: role.isActive ?? true,
+      permissions: permissions
     });
-  };
+    setCurrentRoleId(role.roleId);
+  } else {
+    setRoleData({
+      roleName: '',
+      description: '',
+      isActive: true,
+      permissions: []
+    });
+    setCurrentRoleId(null);
+  }
+
+  setModalMode(mode);
+  setShowModal(true);
+  setSelectedCategory('');
+  setExpandedCategories({
+    Masters: false,
+    Operations: false,
+    Storage: false,
+    Admin: false
+  });
+};
 
   const handleCloseModal = () => {
     setShowModal(false);
@@ -296,6 +324,7 @@ const RoleMaster = () => {
     }));
   };
 
+  
   const isPermissionSelected = (moduleName, action) => {
     return roleData.permissions?.some(
       p => p.moduleName === moduleName && p.action === action && p.isAllowed
@@ -304,7 +333,7 @@ const RoleMaster = () => {
 
   const toggleAllModulePermissions = (moduleName, select) => {
     const permissions = [...roleData.permissions].filter(p => p.moduleName !== moduleName);
-    
+
     if (select) {
       sidebarModules[moduleName].forEach(action => {
         permissions.push({
@@ -347,7 +376,7 @@ const RoleMaster = () => {
     <div className="master-container">
       <div className="master-header">
         <h1>Role Master</h1>
-        
+
         <div className="search-filter-container">
           <div className="search-container">
             <input
@@ -578,149 +607,161 @@ const RoleMaster = () => {
               <div className="permissions-section">
                 <h3>Role Permissions</h3>
                 
-                {modalMode !== 'view' && (
-                  <div className="permissions-container-categories">
-                    <div className="categories-list">
-                      {Object.keys(moduleCategories).map(category => (
-                        <div 
-                          key={category} 
-                          className={`category-item ${expandedCategories[category] ? 'active' : ''}`}
-                          onClick={() => handleCategoryToggle(category)}
-                        >
-                          <span>{category}</span>
-                          <span className="arrow">{expandedCategories[category] ? '▼' : '►'}</span>
+                {isLoadingPermissions ? (
+                  <div className="loading-permissions">
+                    <p>Loading permissions...</p>
+                  </div>
+                ) : (
+                  <>
+                    {modalMode !== 'view' && (
+                      <div className="permissions-container-categories">
+                        <div className="categories-list">
+                          {Object.keys(moduleCategories).map(category => (
+                            <div 
+                              key={category} 
+                              className={`category-item ${expandedCategories[category] ? 'active' : ''}`}
+                              onClick={() => handleCategoryToggle(category)}
+                            >
+                              <span>{category}</span>
+                              <span className="arrow">{expandedCategories[category] ? '▼' : '►'}</span>
+                            </div>
+                          ))}
                         </div>
-                      ))}
-                    </div>
+                        
+                        {selectedCategory && (
+                          <div className="modules-permissions-table">
+                            <h4>{selectedCategory} Modules</h4>
+                            <table className="permissions-matrix-table">
+                              <thead>
+                                <tr>
+                                  <th>Module</th>
+                                  {Array.from(
+                                    new Set(
+                                      moduleCategories[selectedCategory].flatMap(
+                                        moduleName => sidebarModules[moduleName]
+                                      )
+                                    )
+                                  ).sort().map(action => (
+                                    <th key={action}>
+                                      {action.charAt(0).toUpperCase() + action.slice(1)}
+                                    </th>
+                                  ))}
+                                  <th>Select All</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {moduleCategories[selectedCategory].map(moduleName => {
+                                  const allActions = Array.from(
+                                    new Set(
+                                      moduleCategories[selectedCategory].flatMap(
+                                        m => sidebarModules[m]
+                                      )
+                                    )
+                                  ).sort();
+                                  
+                                  return (
+                                    <tr key={moduleName}>
+                                      <td>{formatModuleName(moduleName)}</td>
+                                      {allActions.map(action => (
+                                        <td key={`${moduleName}-${action}`} className="permission-checkbox-cell">
+                                          {sidebarModules[moduleName].includes(action) ? (
+                                            <input
+                                              type="checkbox"
+                                              checked={isPermissionSelected(moduleName, action)}
+                                              onChange={() => handleAddPermission(moduleName, action)}
+                                              disabled={modalMode === 'view'}
+                                            />
+                                          ) : (
+                                            <span className="not-applicable">-</span>
+                                          )}
+                                        </td>
+                                      ))}
+                                      <td className="select-all-cell">
+                                        <button 
+                                          className="select-all-btn"
+                                          onClick={() => toggleAllModulePermissions(moduleName, true)}
+                                          disabled={modalMode === 'view'}
+                                        >
+                                          Select All
+                                        </button>
+                                        <button 
+                                          className="clear-all-btn"
+                                          onClick={() => toggleAllModulePermissions(moduleName, false)}
+                                          disabled={modalMode === 'view'}
+                                        >
+                                          Clear
+                                        </button>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
-                    {selectedCategory && (
-                      <div className="modules-permissions-table">
-                        <h4>{selectedCategory} Modules</h4>
-                        <table className="permissions-matrix-table">
+                    {roleData.permissions?.length > 0 ? (
+                      <div className="selected-permissions-summary">
+                        <h4>Selected Permissions</h4>
+                        <table className="permissions-table">
                           <thead>
                             <tr>
                               <th>Module</th>
-                              {Array.from(
-                                new Set(
-                                  moduleCategories[selectedCategory].flatMap(
-                                    moduleName => sidebarModules[moduleName]
-                                  )
-                                )
-                              ).sort().map(action => (
-                                <th key={action}>
-                                  {action.charAt(0).toUpperCase() + action.slice(1)}
-                                </th>
-                              ))}
-                              <th>Select All</th>
+                              <th>Action</th>
+                              <th>Status</th>
+                              {modalMode !== 'view' && <th>Remove</th>}
                             </tr>
                           </thead>
                           <tbody>
-                            {moduleCategories[selectedCategory].map(moduleName => {
-                              const allActions = Array.from(
-                                new Set(
-                                  moduleCategories[selectedCategory].flatMap(
-                                    m => sidebarModules[m]
-                                  )
-                                )
-                              ).sort();
-                              
-                              return (
-                                <tr key={moduleName}>
-                                  <td>{formatModuleName(moduleName)}</td>
-                                  {allActions.map(action => (
-                                    <td key={`${moduleName}-${action}`} className="permission-checkbox-cell">
-                                      {sidebarModules[moduleName].includes(action) ? (
-                                        <input
-                                          type="checkbox"
-                                          checked={isPermissionSelected(moduleName, action)}
-                                          onChange={() => handleAddPermission(moduleName, action)}
-                                          disabled={modalMode === 'view'}
-                                        />
-                                      ) : (
-                                        <span className="not-applicable">-</span>
-                                      )}
-                                    </td>
-                                  ))}
-                                  <td className="select-all-cell">
-                                    <button 
-                                      className="select-all-btn"
-                                      onClick={() => toggleAllModulePermissions(moduleName, true)}
-                                      disabled={modalMode === 'view'}
+                            {roleData.permissions.map((permission, index) => (
+                              <tr key={index}>
+                                <td>{formatModuleName(permission.moduleName)}</td>
+                                <td>{permission.action.charAt(0).toUpperCase() + permission.action.slice(1)}</td>
+                                <td>
+                                  {modalMode !== 'view' ? (
+                                    <select
+                                      value={permission.isAllowed}
+                                      onChange={(e) => {
+                                        const updatedPermissions = [...roleData.permissions];
+                                        updatedPermissions[index].isAllowed = e.target.value === 'true';
+                                        setRoleData({
+                                          ...roleData,
+                                          permissions: updatedPermissions
+                                        });
+                                      }}
                                     >
-                                      Select All
-                                    </button>
+                                      <option value={true}>Allowed</option>
+                                      <option value={false}>Denied</option>
+                                    </select>
+                                  ) : (
+                                    <span className={permission.isAllowed ? 'status-active' : 'status-inactive'}>
+                                      {permission.isAllowed ? 'Allowed' : 'Denied'}
+                                    </span>
+                                  )}
+                                </td>
+                                {modalMode !== 'view' && (
+                                  <td>
                                     <button 
-                                      className="clear-all-btn"
-                                      onClick={() => toggleAllModulePermissions(moduleName, false)}
-                                      disabled={modalMode === 'view'}
+                                      onClick={() => handleRemovePermission(index)}
+                                      className="remove-btn"
                                     >
-                                      Clear
+                                      Remove
                                     </button>
                                   </td>
-                                </tr>
-                              );
-                            })}
+                                )}
+                              </tr>
+                            ))}
                           </tbody>
                         </table>
                       </div>
+                    ) : (
+                      <div className="no-permissions">
+                        <p>No permissions assigned to this role.</p>
+                      </div>
                     )}
-                  </div>
-                )}
-                
-                {roleData.permissions?.length > 0 && (
-                  <div className="selected-permissions-summary">
-                    <h4>Selected Permissions</h4>
-                    <table className="permissions-table">
-                      <thead>
-                        <tr>
-                          <th>Module</th>
-                          <th>Action</th>
-                          <th>Status</th>
-                          {modalMode !== 'view' && <th>Remove</th>}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {roleData.permissions.map((permission, index) => (
-                          <tr key={index}>
-                            <td>{formatModuleName(permission.moduleName)}</td>
-                            <td>{permission.action.charAt(0).toUpperCase() + permission.action.slice(1)}</td>
-                            <td>
-                              {modalMode !== 'view' ? (
-                                <select
-                                  value={permission.isAllowed}
-                                  onChange={(e) => {
-                                    const updatedPermissions = [...roleData.permissions];
-                                    updatedPermissions[index].isAllowed = e.target.value === 'true';
-                                    setRoleData({
-                                      ...roleData,
-                                      permissions: updatedPermissions
-                                    });
-                                  }}
-                                >
-                                  <option value={true}>Allowed</option>
-                                  <option value={false}>Denied</option>
-                                </select>
-                              ) : (
-                                <span className={permission.isAllowed ? 'status-active' : 'status-inactive'}>
-                                  {permission.isAllowed ? 'Allowed' : 'Denied'}
-                                </span>
-                              )}
-                            </td>
-                            {modalMode !== 'view' && (
-                              <td>
-                                <button 
-                                  onClick={() => handleRemovePermission(index)}
-                                  className="remove-btn"
-                                >
-                                  Remove
-                                </button>
-                              </td>
-                            )}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

@@ -17,6 +17,7 @@ namespace backend.Models
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        
 
         // Simple permissions list (stored as comma-separated string in DB)
         public List<string> Permissions { get; set; } = new List<string>();

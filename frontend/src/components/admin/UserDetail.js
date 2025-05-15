@@ -9,6 +9,8 @@ const UserDetail = ({ userId, onClose, onEdit }) => {
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [userPermissions, setUserPermissions] = useState([]);
+  const [roleBasedPermissions, setRoleBasedPermissions] = useState([]);
 
   useEffect(() => {
     if (userId) {
@@ -22,16 +24,38 @@ const UserDetail = ({ userId, onClose, onEdit }) => {
   const fetchUserDetails = async () => {
     try {
       setLoading(true);
-      // Use the combined function to get user with permissions
-      const userWithPermissions = await getUserWithPermissions(userId);
+      // Fetch user details
+      const userResponse = await getUserWithPermissions(userId);
       
-      if (!userWithPermissions) {
+      if (!userResponse) {
         setError('User data not found');
         setLoading(false);
         return;
       }
 
-      setUser(userWithPermissions);
+      // Set basic user info
+      setUser({
+        ...userResponse,
+        firstName: userResponse.firstName || '',
+        lastName: userResponse.lastName || '',
+        username: userResponse.username || '',
+        email: userResponse.email || '',
+        isActive: userResponse.isActive || false,
+        role: userResponse.roleName || 'Custom',
+        roleId: userResponse.roleId || null,
+        createdAt: userResponse.createdAt,
+        updatedAt: userResponse.updatedAt
+      });
+
+      // Process permissions
+      if (userResponse.userPermissions) {
+        setUserPermissions(userResponse.userPermissions);
+      }
+
+      if (userResponse.roleBasedPermissions) {
+        setRoleBasedPermissions(userResponse.roleBasedPermissions);
+      }
+
       setError(null);
     } catch (err) {
       console.error('Error fetching user details:', err);
@@ -48,19 +72,39 @@ const UserDetail = ({ userId, onClose, onEdit }) => {
   };
 
   const hasPermission = (module, action) => {
-    if (!user || !user.userPermissions) return false;
-    const moduleLower = module.toLowerCase();
-    const modulePermission = user.userPermissions.find(p =>
-      p.moduleName?.toLowerCase() === moduleLower
+    // Check user-specific permissions first
+    const userPermission = userPermissions.find(p => 
+      p.moduleName?.toLowerCase() === module.toLowerCase()
     );
-    if (!modulePermission) return false;
-    switch (action) {
-      case 'Create': return modulePermission.canCreate || false;
-      case 'Read': return modulePermission.canRead || false;
-      case 'Update': return modulePermission.canUpdate || false;
-      case 'Delete': return modulePermission.canDelete || false;
-      default: return false;
+    
+    if (userPermission) {
+      switch (action) {
+        case 'Create': return userPermission.canCreate || false;
+        case 'Read': return userPermission.canRead || false;
+        case 'Update': return userPermission.canUpdate || false;
+        case 'Delete': return userPermission.canDelete || false;
+        default: return false;
+      }
     }
+
+    // If no user-specific permission, check role-based permissions if role is assigned
+    if (user?.roleId) {
+      const rolePermission = roleBasedPermissions.find(p => 
+        p.moduleName?.toLowerCase() === module.toLowerCase()
+      );
+      
+      if (rolePermission) {
+        switch (action) {
+          case 'Create': return rolePermission.canCreate || false;
+          case 'Read': return rolePermission.canRead || false;
+          case 'Update': return rolePermission.canUpdate || false;
+          case 'Delete': return rolePermission.canDelete || false;
+          default: return false;
+        }
+      }
+    }
+
+    return false;
   };
 
   // Get current modules based on active tab
@@ -77,28 +121,25 @@ const UserDetail = ({ userId, onClose, onEdit }) => {
 
   // Calculate permission statistics for summary
   const getPermissionStats = () => {
-    if (!user || !user.userPermissions) return { total: 0, full: 0, read: 0, partial: 0, none: 0 };
-    
     const allModules = [...masterModules, ...operationsModules, ...storageModules, ...adminModules];
     
     // Count modules with different permission levels
     let full = 0, read = 0, partial = 0, none = 0;
     
     allModules.forEach(module => {
-      const modulePermission = user.userPermissions.find(p => 
-        p.moduleName?.toLowerCase() === module.toLowerCase()
-      );
-      
-      if (!modulePermission) {
-        none++;
-      } else if (modulePermission.canCreate && modulePermission.canRead && 
-                modulePermission.canUpdate && modulePermission.canDelete) {
+      const hasCreate = hasPermission(module, 'Create');
+      const hasRead = hasPermission(module, 'Read');
+      const hasUpdate = hasPermission(module, 'Update');
+      const hasDelete = hasPermission(module, 'Delete');
+
+      if (hasCreate && hasRead && hasUpdate && hasDelete) {
         full++;
-      } else if (!modulePermission.canCreate && modulePermission.canRead && 
-                !modulePermission.canUpdate && !modulePermission.canDelete) {
+      } else if (!hasCreate && hasRead && !hasUpdate && !hasDelete) {
         read++;
-      } else {
+      } else if (hasRead || hasCreate || hasUpdate || hasDelete) {
         partial++;
+      } else {
+        none++;
       }
     });
     

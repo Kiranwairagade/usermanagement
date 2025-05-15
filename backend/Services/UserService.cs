@@ -15,7 +15,8 @@ namespace backend.Services
         Task<UserDetailDto> GetUserByIdAsync(int id);
         Task<IEnumerable<UserPermissionDto>> GetUserPermissionsAsync(int userId);
         Task<bool> UpdateUserAsync(int id, UpdateUserRequest request);
-        Task<int> CreateUserAsync(CreateUserRequest request); // Add this method
+        Task<int> CreateUserAsync(CreateUserRequest request); 
+        Task<bool> DeleteUserAsync(int userId);
     }
 
     public class UserService : IUserService
@@ -218,5 +219,17 @@ namespace backend.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        public async Task<bool> DeleteUserAsync(int userId)
+{
+    var user = await _context.Users.FindAsync(userId);
+    if (user == null)
+        return false;
+
+    _context.Users.Remove(user);
+    await _context.SaveChangesAsync();
+    return true;
+}
+
     }
 }

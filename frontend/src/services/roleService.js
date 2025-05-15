@@ -21,20 +21,30 @@ const roleService = {
     }
   },
 
+  getRolePermissions: async (id) => {
+  try {
+    const response = await api.get(`/roles/${id}/permissions`);
+    console.log("Role permissions response:", response.data);
+
+    // ✅ Fix: use response.data.$values instead of response.data
+    return response.data.$values.map(perm => ({
+      moduleName: perm.moduleName,
+      action: perm.action,
+      isAllowed: perm.isAllowed
+    }));
+  } catch (error) {
+    console.error('Error fetching role permissions:', error);
+    throw error;
+  }
+},
+
+
   createRole: async (roleData) => {
     try {
-      console.log('Creating role with data:', roleData);
-      const token = localStorage.getItem('authToken');
-      console.log('Auth Token:', token ? 'Present' : 'Missing');
-      
       const response = await api.post('/roles', roleData);
-      console.log('Role creation response:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Full error creating role:', error);
-      console.error('Error response:', error.response?.data);
-      console.error('Error status:', error.response?.status);
-      console.error('Error headers:', error.response?.headers);
+      console.error('Error creating role:', error);
       throw error;
     }
   },
@@ -45,6 +55,16 @@ const roleService = {
       return response.data;
     } catch (error) {
       console.error('Error updating role:', error);
+      throw error;
+    }
+  },
+
+  updateRolePermissions: async (permissionsData) => {
+    try {
+      const response = await api.put(`/roles/${permissionsData.roleId}/permissions`, permissionsData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating role permissions:', error);
       throw error;
     }
   },
