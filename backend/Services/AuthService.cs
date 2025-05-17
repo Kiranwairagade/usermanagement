@@ -90,50 +90,58 @@ namespace backend.Services
             };
         }
         public async Task<UserDto?> GetUserByIdAsync(int userId)
-        {
-            var user = await _context.Users.FindAsync(userId);
+{
+    var user = await _context.Users
+        .Include(u => u.Role) // Include Role if you have navigation property
+        .FirstOrDefaultAsync(u => u.UserId == userId);
 
-            if (user == null)
-                return null;
+    if (user == null)
+        return null;
 
-            // Load or generate user permissions here if needed
-            var permissions = new List<string>();
+    // Load or generate user permissions here if needed
+    var permissions = new List<string>();
 
-            return new UserDto(
-                user.UserId,
-                user.Username ?? string.Empty,
-                user.Email ?? string.Empty,
-                user.FirstName ?? string.Empty,
-                user.LastName ?? string.Empty,
-                user.IsActive,
-                user.CreatedAt,
-                user.UpdatedAt,
-                permissions
-            );
-        }
-
+    return new UserDto(
+        user.UserId,
+        user.Username ?? string.Empty,
+        user.Email ?? string.Empty,
+        user.FirstName ?? string.Empty,
+        user.LastName ?? string.Empty,
+        user.IsActive,
+        user.RoleId, // Add RoleId
+        user.Role?.RoleName, // Add RoleName
+        permissions,
+        user.CreatedAt,
+        user.UpdatedAt
+    );
+}
         public async Task<UserDto?> GetUserByEmailAsync(string email)
-        {
-            if (string.IsNullOrWhiteSpace(email))
-                return null;
+{
+    if (string.IsNullOrWhiteSpace(email))
+        return null;
 
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null)
-                return null;
+    var user = await _context.Users
+        .Include(u => u.Role) // Include Role if you have navigation property
+        .FirstOrDefaultAsync(u => u.Email == email);
+    
+    if (user == null)
+        return null;
 
-            var permissions = new List<string>();
-            return new UserDto(
-                user.UserId,
-                user.Username ?? string.Empty,
-                user.Email ?? string.Empty,
-                user.FirstName ?? string.Empty,
-                user.LastName ?? string.Empty,
-                user.IsActive,
-                user.CreatedAt,
-                user.UpdatedAt,
-                permissions
-            );
-        }
+    var permissions = new List<string>();
+    return new UserDto(
+        user.UserId,
+        user.Username ?? string.Empty,
+        user.Email ?? string.Empty,
+        user.FirstName ?? string.Empty,
+        user.LastName ?? string.Empty,
+        user.IsActive,
+        user.RoleId, // Add RoleId
+        user.Role?.RoleName, // Add RoleName
+        permissions,
+        user.CreatedAt,
+        user.UpdatedAt
+    );
+}
 
         private string GenerateJwtToken(User user)
         {

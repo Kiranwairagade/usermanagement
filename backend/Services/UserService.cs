@@ -64,6 +64,7 @@ namespace backend.Services
         public async Task<UserDetailDto> GetUserByIdAsync(int id)
         {
             var user = await _context.Users
+            .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.UserId == id);
 
             if (user == null)
@@ -77,7 +78,9 @@ namespace backend.Services
                 Username = user.Username,
                 Email = user.Email,
                 FirstName = user.FirstName,
-                LastName = user.LastName,
+                LastName = user.LastName,    
+                RoleId = user.RoleId,  // Add this
+        RoleName = user.Role?.RoleName,  // Add this           
                 IsActive = user.IsActive,
                 Permissions = user.Permissions ?? new List<string>()
             };
@@ -121,6 +124,7 @@ namespace backend.Services
                 IsActive = request.IsActive,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
+                RoleId = request.RoleId,
                 Permissions = request.UserPermissions
                     .Where(p => p.CanRead || p.CanCreate || p.CanUpdate || p.CanDelete)
                     .Select(p => p.ModuleName)
@@ -180,6 +184,7 @@ namespace backend.Services
             user.Email = request.Email;
             user.FirstName = request.FirstName;
             user.LastName = request.LastName;
+            user.RoleId = request.RoleId;
             user.IsActive = request.IsActive;
             user.UpdatedAt = DateTime.UtcNow;
 

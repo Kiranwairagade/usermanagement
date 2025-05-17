@@ -18,6 +18,9 @@ namespace backend.Models
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         
+        // Add RoleId as a foreign key
+        public int? RoleId { get; set; }
+        public virtual Role? Role { get; set; }
 
         // Simple permissions list (stored as comma-separated string in DB)
         public List<string> Permissions { get; set; } = new List<string>();

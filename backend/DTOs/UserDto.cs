@@ -4,16 +4,18 @@ using System.Collections.Generic;
 namespace backend.DTOs
 {
     public record UserDto(
-        int UserId,
-        string Username,
-        string Email,
-        string FirstName,
-        string LastName,
-        bool IsActive,
-        DateTime CreatedAt,
-        DateTime UpdatedAt,
-        List<string> Permissions
-    );
+    int UserId,
+    string Username,
+    string Email,
+    string FirstName,
+    string LastName,
+    bool IsActive,
+    int? RoleId,
+    string? RoleName,
+    List<string> Permissions,
+    DateTime CreatedAt = default,
+    DateTime UpdatedAt = default
+);
 
     public class CreateUserDto
     {
@@ -43,6 +45,7 @@ namespace backend.DTOs
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
+        public int? RoleId { get; set; }  // Add this
         public bool IsActive { get; set; }
         public List<UserPermissionDto> UserPermissions { get; set; } = new();
     }
@@ -63,6 +66,8 @@ namespace backend.DTOs
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+         public int? RoleId { get; set; }  // Add this
+    public string? RoleName { get; set; }  // Add this
         public List<string> Permissions { get; set; } = new List<string>();
         public UserDetailDto()
         {
@@ -99,6 +104,7 @@ namespace backend.DTOs
     public string ConfirmPassword { get; set; }
     public string FirstName { get; set; }
     public string LastName { get; set; }
+    public int? RoleId { get; set; }
     public bool IsActive { get; set; }
     public List<UserPermissionDto> UserPermissions { get; set; } = new();
     public DateTime CreatedAt { get; set; }
