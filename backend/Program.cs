@@ -6,6 +6,7 @@ using backend.Services;
 using backend.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using backend.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -54,7 +55,8 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IRoleService, RoleService>();
-builder.Services.AddScoped<IUserService, UserService>(); // Add this line to register the UserService
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IActivityLogService, ActivityLogService>(); // Add Activity Log Service
 builder.Services.AddHostedService<PermissionDataMigration>();
 
 // JWT Authentication Configuration
@@ -109,6 +111,7 @@ using (var scope = app.Services.CreateScope())
         Console.WriteLine($"An error occurred during database migration: {ex.Message}");
     }
 }
+
 // HTTP request pipeline
 if (app.Environment.IsDevelopment())
 {
@@ -122,7 +125,11 @@ app.UseHttpsRedirection();
 app.UseCors(CorsPolicyName);
 
 app.UseAuthentication();
+// Add Activity Logging Middleware 
+app.UseActivityLogging();
 app.UseAuthorization();
+
+
 
 app.MapControllers();
 

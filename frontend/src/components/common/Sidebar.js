@@ -39,28 +39,29 @@ const icons = {
   'Suppliers': <Truck size={18} />,
   'Products': <PackageSearch size={18} />,
   'Roles': <ShieldCheck size={18} />,
-  // Operations icons
+  // Operations
   'Production Orders': <ClipboardList size={18} />,
   'Material Receipt': <PackagePlus size={18} />,
   'Quality Check': <PackageCheck size={18} />,
-  // Storage icons
+  // Storage
   'Inventory Management': <Warehouse size={18} />,
   'Stock Transfers': <Forklift size={18} />,
   'Stock Adjustments': <Boxes size={18} />,
-  // Admin icons
+  // Admin
   'User Management': <UserCog size={18} />,
-  'ChatBot': <MessageSquare size={18} />
+  'ChatBot': <MessageSquare size={18} />,
+  'Activity Log': <ClipboardList size={18} />  // ✅ Added icon
 };
 
 const Sidebar = () => {
   const { logout } = useAuth();
   const { hasPermission, isLoading } = usePermission();
   const navigate = useNavigate();
-  const [mastersOpen, setMastersOpen] = useState(false);
-const [operationsOpen, setOperationsOpen] = useState(false);
-const [storageOpen, setStorageOpen] = useState(false);
-const [adminOpen, setAdminOpen] = useState(false);
 
+  const [mastersOpen, setMastersOpen] = useState(false);
+  const [operationsOpen, setOperationsOpen] = useState(false);
+  const [storageOpen, setStorageOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -68,19 +69,15 @@ const [adminOpen, setAdminOpen] = useState(false);
   };
 
   const handleRestrictedClick = (e, module) => {
-    // Convert module name to path format (lowercase with dashes)
     const modulePathName = module.toLowerCase().replace(/\s+/g, '-');
-    
     if (!hasPermission(modulePathName, 'view')) {
       e.preventDefault();
       alert(`You don't have permission to access the ${module} module.`);
     }
   };
 
-  // Helper function to create sidebar links
   const renderModuleLinks = (modulesList) => {
     return modulesList.map((module) => {
-      // Convert module name to path format (lowercase with dashes)
       const path = `/${module.toLowerCase().replace(/\s+/g, '-')}`;
       const modulePathName = module.toLowerCase().replace(/\s+/g, '-');
       const hasAccess = !isLoading && hasPermission(modulePathName, 'view');
@@ -104,7 +101,7 @@ const [adminOpen, setAdminOpen] = useState(false);
   return (
     <div className="sidebar">
       <div className="sidebar-content">
-        {/* Masters Section */}
+        {/* Masters */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -120,7 +117,7 @@ const [adminOpen, setAdminOpen] = useState(false);
           )}
         </div>
 
-        {/* Operations Section */}
+        {/* Operations */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -136,7 +133,7 @@ const [adminOpen, setAdminOpen] = useState(false);
           )}
         </div>
 
-        {/* Storage Section */}
+        {/* Storage */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"
@@ -152,7 +149,7 @@ const [adminOpen, setAdminOpen] = useState(false);
           )}
         </div>
 
-        {/* Admin Section */}
+        {/* Admin */}
         <div className="sidebar-section">
           <div
             className="sidebar-section-header"

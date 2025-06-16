@@ -26,7 +26,8 @@ const storageModules = [
 // Admin modules
 const adminModules = [
   "User Management",
-  "ChatBot"
+  'ChatBot',
+  'Activity Log'
 ];
 
 // Export all modules by category

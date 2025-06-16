@@ -8,7 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
-    <PackageReference Include="DatabaseSchemaReader" Version="2.12.0" />
+    <PackageReference Include="DatabaseSchemaReader" Version="2.12.0" />  
+    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.7.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.3" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.3.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.3" />

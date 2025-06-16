@@ -23,6 +23,7 @@ namespace backend.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<RolePermission> RolePermissions { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -48,7 +49,7 @@ namespace backend.Data
                 .HasForeignKey(up => up.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-                // Configure UserRole relationship
+            // Configure UserRole relationship
             modelBuilder.Entity<UserRole>()
                 .HasOne(ur => ur.User)
                 .WithMany()
@@ -67,6 +68,15 @@ namespace backend.Data
                 .WithMany(r => r.RolePermissions)
                 .HasForeignKey(rp => rp.RoleId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+                // Configure ActivityLog
+            modelBuilder.Entity<ActivityLog>(entity =>
+            {
+                entity.HasIndex(e => e.DateTime);
+                entity.HasIndex(e => e.UserEmail);
+                entity.HasIndex(e => e.Module);
+                entity.Property(e => e.DateTime).HasDefaultValueSql("GETDATE()");
+            });
         }
     }
 }

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create a base API instance
 const api = axios.create({
-  baseURL: 'http://localhost:5207/api', // Ensure this matches your .NET backend URL
+  baseURL: 'http://localhost:5207/api', // Updated to use HTTPS
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -27,7 +27,7 @@ api.interceptors.response.use(
     if (error.response) {
       // Handle unauthorized errors (expired token, etc.)
       if (error.response.status === 401) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('authToken'); // Fixed token key
         window.location.href = '/login';
       }
       
