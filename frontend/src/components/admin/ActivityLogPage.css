@@ -1,9 +1,23 @@
-/* components/admin/ActivityLogPage.css */
-
-.activity-log-page {
-  padding: 20px;
-  max-width: 1400px;
+/* Wrapper container for padding and white background */
+.activity-log-wrapper {
+  width: 85%;
+  max-width: 980px;
   margin: 0 auto;
+  padding: 1.2rem;
+  margin-left: 200px;
+  margin-top: 40px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Main activity log container */
+.activity-log-page {
+  padding: 16px;
+  background-color: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  font-size: 13px;
 }
 
 /* Header */
@@ -11,12 +25,12 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .page-header h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 20px;
   color: #333;
 }
 
@@ -29,14 +43,14 @@
 .export-btn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 6px 12px;
   background-color: #4CAF50;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.2s ease;
 }
 
@@ -53,8 +67,8 @@
 
 .loading-spinner {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border: 2px solid #ffffff;
   border-radius: 50%;
   border-top-color: transparent;
@@ -71,9 +85,9 @@
 .error-message {
   background-color: #ffebee;
   color: #c62828;
-  padding: 12px;
+  padding: 10px;
   border-radius: 4px;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -83,7 +97,7 @@
   background: none;
   border: none;
   color: #c62828;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   padding: 0 8px;
 }
@@ -91,50 +105,51 @@
 /* Filters Section */
 .filters-section {
   background-color: #f5f5f5;
-  padding: 20px;
-  border-radius: 8px;
-  margin-bottom: 20px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
 }
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+  margin-bottom: 10px;
 }
 
 .filter-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .filter-group label {
-  font-size: 14px;
-  color: #666;
+  font-size: 12px;
+  color: #555;
 }
 
 .filter-group input,
 .filter-group select {
-  padding: 8px;
-  border: 1px solid #ddd;
+  padding: 6px;
+  font-size: 13px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  font-size: 14px;
 }
 
 .filter-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   justify-content: flex-end;
 }
 
 .search-btn,
 .clear-btn {
-  padding: 8px 16px;
-  border: none;
+  padding: 6px 12px;
   border-radius: 4px;
+  border: none;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: background-color 0.2s;
 }
 
@@ -166,17 +181,17 @@
 /* Results Section */
 .results-section {
   background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .results-header {
-  padding: 16px;
+  padding: 12px;
   border-bottom: 1px solid #eee;
   display: flex;
   justify-content: space-between;
   color: #666;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .table-container {
@@ -186,12 +201,12 @@
 .activity-log-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .activity-log-table th {
   background-color: #f5f5f5;
-  padding: 12px;
+  padding: 8px;
   text-align: left;
   font-weight: 600;
   color: #333;
@@ -199,7 +214,7 @@
 }
 
 .activity-log-table td {
-  padding: 12px;
+  padding: 8px;
   border-bottom: 1px solid #eee;
   color: #666;
 }
@@ -211,9 +226,9 @@
 /* Status and Action Badges */
 .status-badge,
 .action-badge {
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 10px;
+  font-size: 11px;
   font-weight: 500;
 }
 
@@ -264,7 +279,7 @@
 
 /* Loading State */
 .loading {
-  padding: 40px;
+  padding: 30px;
   text-align: center;
   color: #666;
 }
@@ -272,7 +287,7 @@
 /* No Data State */
 .no-data {
   text-align: center;
-  padding: 40px;
+  padding: 30px;
   color: #666;
   font-style: italic;
 }
@@ -283,18 +298,18 @@
   justify-content: center;
   align-items: center;
   gap: 8px;
-  padding: 16px;
+  padding: 12px;
   border-top: 1px solid #eee;
 }
 
 .pagination-btn {
-  padding: 6px 12px;
+  padding: 6px 10px;
   border: 1px solid #ddd;
   background-color: white;
   color: #666;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   transition: all 0.2s;
 }
 
@@ -310,22 +325,19 @@
 
 .pagination-info {
   color: #666;
-  font-size: 14px;
-  margin: 0 12px;
+  font-size: 13px;
+  margin: 0 8px;
 }
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .activity-log-page {
-    padding: 10px;
-  }
-
   .filters-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .filter-actions {
     flex-direction: column;
+    gap: 8px;
   }
 
   .search-btn,
@@ -335,8 +347,8 @@
 
   .activity-log-table th,
   .activity-log-table td {
-    padding: 8px;
-    font-size: 13px;
+    padding: 6px;
+    font-size: 12px;
   }
 
   .pagination {

@@ -134,6 +134,7 @@ const ActivityLogPage = () => {
 
   /* ----------------- ui ----------------- */
   return (
+  <div className="activity-log-wrapper">
     <div className="activity-log-page">
       {/* header */}
       <div className="page-header">
@@ -309,6 +310,7 @@ const ActivityLogPage = () => {
           </>
         )}
       </div>
+    </div>
     </div>
   );
 };
